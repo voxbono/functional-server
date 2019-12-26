@@ -4,7 +4,7 @@ const $ = require ('sanctuary-def');
 const routes = require ('./state/routes');
 const errorHandler = require ('./handlers/error');
 
-const getRouteString = req => `${req.method} ${req.url}`;
+const getRouteString = req => `${S.prop ('method') (req)} ${S.prop ('url') (req)}`;
 const getRouteFnFromRouteString = routeString => S.get (S.is ($.AnyFunction)) (routeString) (routes);
 
 const getRouteHandler = S.pipe ([
