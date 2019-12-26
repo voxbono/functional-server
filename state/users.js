@@ -2,11 +2,11 @@ module.exports = {
   users: [
     {
       id: 1,
-      name: 'Jan-Vidar'
+      name: 'Bob'
     },
     {
       id: 2,
-      name: 'Merete'
+      name: 'Alice'
     }
   ]
 };
