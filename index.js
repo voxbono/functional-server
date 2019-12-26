@@ -4,15 +4,22 @@ const $ = require ('sanctuary-def');
 const routes = require ('./state/routes');
 const errorHandler = require ('./handlers/error');
 
-const getRouteString = req => `${S.prop ('method') (req)} ${S.prop ('url') (req)}`;
-const getRouteFnFromRouteString = routeString => S.get (S.is ($.AnyFunction)) (routeString) (routes);
+// getRouteString :: Object -> String
+const getRouteString = req =>
+  `${S.prop ('method') (req)} ${S.prop ('url') (req)}`;
 
+// getRouteHandlerFromRouteString :: String -> Maybe Function
+const getRouteHandlerFromRouteString = routeString =>
+ S.get (S.is ($.AnyFunction)) (routeString) (routes);
+
+// getRouteHandler :: Object -> Either Int Function
 const getRouteHandler = S.pipe ([
   getRouteString,
-  getRouteFnFromRouteString,
+  getRouteHandlerFromRouteString,
   S.maybeToEither (404)
 ]);
 
+// handleRequest :: (req, res) -> http response
 const handleRequest = (req, res) =>
   S.either
     (errorHandler (req) (res))
