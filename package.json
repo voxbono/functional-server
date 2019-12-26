@@ -1,0 +1,27 @@
+{
+  "name": "functional-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "eslint": "^6.7.2",
+    "eslint-config-node": "^4.0.0",
+    "eslint-config-prettier": "^6.7.0",
+    "eslint-plugin-node": "^10.0.0",
+    "eslint-plugin-prettier": "^3.1.2",
+    "nodemon": "^2.0.2",
+    "prettier": "^1.19.1",
+    "sanctuary-style": "^3.0.0"
+  },
+  "dependencies": {
+    "fluture": "^12.0.2",
+    "sanctuary": "^2.0.1",
+    "sanctuary-def": "^0.20.1"
+  }
+}
