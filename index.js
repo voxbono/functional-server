@@ -3,21 +3,21 @@ const S = require ('sanctuary');
 const routes = require ('./state/routes');
 const { matchComponent } = require ('./types/types');
 
-const getRouteHandler = routeArray =>
+const getRouteData = routeArray =>
    S.reduce
     (
-      acc => ([route, handler]) =>
-        S.equals (route.length) (routeArray.length) && S.isNothing (acc)
+      maybeHandler => ([route, routeHandler]) =>
+        S.equals (route.length) (routeArray.length) && S.isNothing (maybeHandler)
           ? S.pipe
             ([
               S.zip (route),
               S.ap ([S.pair (matchComponent)]),
               S.sequence (S.Maybe),
               S.map (S.reduce (acc => curr => ({ ...acc, ...curr })) ({})),
-              S.map (data => handler (data))
+              S.map (routeHandler)
             ])
             (routeArray)
-          : acc
+          : maybeHandler
     )
     (S.Nothing)
     (routes);
@@ -26,7 +26,7 @@ const routeHandler = S.pipe ([
   req => req.url,
   S.splitOn ('/'),
   S.reject (S.equals ('')),
-  getRouteHandler,
+  getRouteData,
   S.maybeToEither (404)
 ]);
 
