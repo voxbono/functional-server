@@ -23,5 +23,8 @@
     "fluture": "^12.0.2",
     "sanctuary": "^2.0.1",
     "sanctuary-def": "^0.20.1"
+  },
+  "engines": {
+    "node": ">=8.10.0"
   }
 }

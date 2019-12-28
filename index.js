@@ -1,25 +1,34 @@
 const http = require ('http');
 const S = require ('sanctuary');
-const $ = require ('sanctuary-def');
 const routes = require ('./state/routes');
-const url = require ('url');
+const { matchComponent } = require ('./types/types');
 
-// getRouteString :: Object -> String
-const getRouteString = req =>
-  `${S.prop ('method') (req)} ${S.prop ('url') (req)}`;
+const getRouteHandler = routeArray =>
+   S.reduce
+    (
+      acc => ([route, handler]) =>
+        S.equals (route.length) (routeArray.length) && S.isNothing (acc)
+          ? S.pipe
+            ([
+              S.zip (route),
+              S.ap ([S.pair (matchComponent)]),
+              S.sequence (S.Maybe),
+              S.map (S.reduce (acc => curr => ({ ...acc, ...curr })) ({})),
+              S.map (data => handler (data))
+            ])
+            (routeArray)
+          : acc
+    )
+    (S.Nothing)
+    (routes);
 
-// getHandlerFnFromRouteString :: String -> Maybe Function
-const getHandlerFnFromRouteString = routeString =>
- S.get (S.is ($.AnyFunction)) (routeString) (routes);
-
-// getRouteHandler :: Object -> Either Int Function
-const getRouteHandler = S.pipe ([
-  getRouteString,
-  getHandlerFnFromRouteString,
-  S.map (handlerFn => handlerFn ()),
+const routeHandler = S.pipe ([
+  req => req.url,
+  S.splitOn ('/'),
+  S.reject (S.equals ('')),
+  getRouteHandler,
   S.maybeToEither (404)
 ]);
-
 
 // handleRequest :: (req, res) -> http response
 const handleRequest = (req, res) =>
@@ -32,7 +41,7 @@ const handleRequest = (req, res) =>
       res.writeHead (200);
       res.end (JSON.stringify (data));
     })
-    (getRouteHandler (req));
+    (routeHandler (req));
 
 const server = http.createServer (handleRequest);
 server.listen (3000);
