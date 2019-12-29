@@ -1,6 +1,6 @@
+const Future = require ('fluture');
 const S = require ('../lib/sanctuary');
 const users = require ('../state/users');
-const Future = require ('fluture');
 
 // :: {} -> Future Void Response
 const getAllUsers = () => Future.resolve ({ statusCode: 200, body: S.Just (JSON.stringify (users)) });

@@ -1,6 +1,6 @@
 const http = require ('http');
-const S = require ('./lib/sanctuary');
 const Future = require ('fluture');
+const S = require ('./lib/sanctuary');
 const routes = require ('./state/routes');
 const { matchComponent } = require ('./types/types');
 
