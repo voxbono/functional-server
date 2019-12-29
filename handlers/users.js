@@ -1,18 +1,15 @@
 const S = require ('../lib/sanctuary');
 const users = require ('../state/users');
+const Future = require ('fluture');
 
-// :: () -> Maybe Array Object
-const getAllUsers = () => S.Just (users);
+// :: {} -> Future Void Response
+const getAllUsers = () => Future.resolve ({ statusCode: 200, body: S.Just (JSON.stringify (users)) });
 
-// StrMap a -> Maybe StrMap b
-const getUserById = S.pipe ([
-  ({ id }) => S.parseInt (10) (id),
-  S.chain
-    (id =>
-      S.find
-        (user => id  === user.id)
-        (users)
-    )
-]);
+// { id :: String } -> Future Void Response
+const getUserById = ({ id }) =>
+  S.maybe (Future.resolve ({ statusCode: 404, body: S.Nothing }))
+          (result => Future.resolve ({ statusCode: 200, body: S.Just (JSON.stringify (result)) }))
+          (S.chain (id => S.find (user => id  === user.id) (users))
+                   (S.parseInt (10) (id)));
 
 module.exports = { getAllUsers, getUserById };

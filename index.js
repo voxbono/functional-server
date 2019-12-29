@@ -1,43 +1,37 @@
 const http = require ('http');
 const S = require ('./lib/sanctuary');
-const $ = require ('sanctuary-def');
 const Future = require ('fluture');
 const routes = require ('./state/routes');
 const { matchComponent } = require ('./types/types');
 
-// maybeToFuture :: a -> Maybe b -> Future a b
-const maybeToFuture = x => S.maybe (Future.reject (x)) (Future.resolve);
+// getRouteData :: Array (Pair (Array Component) (StrMap (StrMap String -> Future Void Resonse)))
+//              -> String
+//              -> Array String
+//              -> Maybe (Future Void Resonse)
+const getRouteData = routes => method => urlArray =>
+  S.reduce (maybeHandler => ([components, routeHandler]) =>
+              S.maybe_ (() => components.length === urlArray.length
+                              ? S.ap (S.value (method) (routeHandler))
+                                     (S.map (S.reduce (S.concat) ({}))
+                                            (S.sequence (S.Maybe)
+                                                        (S.zipWith (matchComponent)
+                                                                   (components)
+                                                                   (urlArray))))
+                              : S.Nothing)
+                      (S.Just)
+                      (maybeHandler))
+           (S.Nothing)
+           (routes);
 
-// getRouteData :: method -> routeArray -> Maybe Object
-const getRouteData = method => routeArray =>
-  S.reduce
-    (
-      maybeHandler => ([route, routeHandler]) =>
-        S.equals (route.length) (routeArray.length) && S.isNothing (maybeHandler)
-          ? S.pipe
-            ([
-              S.zip (route),
-              S.ap ([S.pair (matchComponent)]),
-              S.sequence (S.Maybe),
-              S.map (S.reduce (S.concat) ({})),
-              S.ap (S.get (S.is ($.AnyFunction)) (method) (routeHandler))
-            ])
-            (routeArray)
-          : maybeHandler
-    )
-    (S.Nothing)
-    (routes);
-
-// routeHandler :: Reqeust req => req -> Future errorCode Object
+// routeHandler :: NodeRequest -> Future Void Response
 const routeHandler = req =>
   S.pipe
     ([
       S.prop ('url'),
       S.splitOn ('/'),
       S.reject (S.equals ('')),
-      getRouteData (req.method),
-      S.fromMaybe (S.Nothing),
-      maybeToFuture (404)
+      getRouteData (routes) (req.method),
+      S.fromMaybe (Future.resolve ({ statusCode: 404, body: S.Nothing }))
     ])
     (req);
 
@@ -45,12 +39,13 @@ const routeHandler = req =>
 const handleRequest = (req, res) =>
   Future.fork
     (code => {
-      res.writeHead (code);
-      res.end (JSON.stringify (http.STATUS_CODES[code]));
+      console.log ('OMG! This should not happen');
+      res.writeHead (500);
+      res.end (JSON.stringify (http.STATUS_CODES[500]));
     })
-    (data => {
-      res.writeHead (200);
-      res.end (JSON.stringify (data));
+    (({ statusCode, body }) => {
+      res.writeHead (statusCode);
+      S.maybe_ (() => res.end ()) (s => res.end (s)) (body);
     })
     (routeHandler (req));
 
