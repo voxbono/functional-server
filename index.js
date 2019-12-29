@@ -8,7 +8,7 @@ const { matchComponent } = require ('./types/types');
 const maybeToFuture = x => S.maybe (Future.reject (x)) (Future.resolve);
 
 const getRouteData = method => routeArray =>
-   S.reduce
+  S.reduce
     (
       maybeHandler => ([route, routeHandler]) =>
         S.equals (route.length) (routeArray.length) && S.isNothing (maybeHandler)
