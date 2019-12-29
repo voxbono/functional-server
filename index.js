@@ -36,6 +36,7 @@ const routeHandler = req =>
       S.splitOn ('/'),
       S.reject (S.equals ('')),
       getRouteData (req.method),
+      S.fromMaybe (S.Nothing),
       maybeToFuture (404)
     ])
     (req);

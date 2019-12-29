@@ -1,2 +1,4 @@
+const S = require ('../lib/sanctuary');
+
 // :: () -> Object
-module.exports = () => ({ a: 'b' });
+module.exports = () => S.Just ({ a: 'b' });
