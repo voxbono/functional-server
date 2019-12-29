@@ -1,10 +1,11 @@
 const http = require ('http');
-const S = require ('sanctuary');
+const S = require ('./lib/sanctuary');
 const $ = require ('sanctuary-def');
+const Future = require ('fluture');
 const routes = require ('./state/routes');
 const { matchComponent } = require ('./types/types');
 
-const getRouteHandler = method => S.get (S.is ($.AnyFunction)) (method);
+const maybeToFuture = x => S.maybe (Future.reject (x)) (Future.resolve);
 
 const getRouteData = method => routeArray =>
    S.reduce
@@ -17,7 +18,7 @@ const getRouteData = method => routeArray =>
               S.ap ([S.pair (matchComponent)]),
               S.sequence (S.Maybe),
               S.map (S.reduce (S.concat) ({})),
-              S.ap (getRouteHandler (method) (routeHandler))
+              S.ap (S.get (S.is ($.AnyFunction)) (method) (routeHandler))
             ])
             (routeArray)
           : maybeHandler
@@ -30,12 +31,12 @@ const routeHandler = req => S.pipe ([
   S.splitOn ('/'),
   S.reject (S.equals ('')),
   getRouteData (req.method),
-  S.maybeToEither (404)
+  maybeToFuture (404)
 ]) (req);
 
-// handleRequest :: (req, res) -> http response
+// handleRequest :: (req, res) -> Future http response
 const handleRequest = (req, res) =>
-  S.either
+  Future.fork
     (code => {
       res.writeHead (code);
       res.end (JSON.stringify (http.STATUS_CODES[code]));

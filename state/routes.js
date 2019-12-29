@@ -1,4 +1,4 @@
-const S = require ('sanctuary');
+const S = require ('../lib/sanctuary');
 const { Literal, Capture } = require ('../types/types');
 const indexHandler = require ('../handlers/index');
 const usersHandler = require ('../handlers/users');

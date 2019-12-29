@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "fluture": "^12.0.2",
+    "fluture-sanctuary-types": "^5.0.0",
     "sanctuary": "^2.0.1",
     "sanctuary-def": "^0.20.1"
   },

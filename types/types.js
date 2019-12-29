@@ -1,4 +1,4 @@
-const S = require ('sanctuary');
+const S = require ('../lib/sanctuary');
 
 //    Literal :: String -> Component
 const Literal = value => ({ tagName: 'Literal', value });
