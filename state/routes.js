@@ -3,7 +3,7 @@ const { Literal, Capture } = require ('../types/types');
 const indexHandler = require ('../handlers/index');
 const usersHandler = require ('../handlers/users');
 
-
+// routes :: [Pair ([Literal || Capture], StrMap f)]
 module.exports = [
   S.Pair ([]) ({ GET: indexHandler }),
   S.Pair ([Literal ('users')]) ({ GET: usersHandler }),

@@ -5,8 +5,10 @@ const Future = require ('fluture');
 const routes = require ('./state/routes');
 const { matchComponent } = require ('./types/types');
 
+// maybeToFuture :: a -> Maybe b -> Future a b
 const maybeToFuture = x => S.maybe (Future.reject (x)) (Future.resolve);
 
+// getRouteData :: method -> routeArray -> Maybe Object
 const getRouteData = method => routeArray =>
   S.reduce
     (
@@ -26,6 +28,7 @@ const getRouteData = method => routeArray =>
     (S.Nothing)
     (routes);
 
+// routeHandler :: Reqeust req => req -> Future errorCode Object
 const routeHandler = req =>
   S.pipe
     ([
@@ -37,7 +40,7 @@ const routeHandler = req =>
     ])
     (req);
 
-// handleRequest :: (req, res) -> Future http response
+// handleRequest :: (Request req, Response res) => (req, res) -> Future Response
 const handleRequest = (req, res) =>
   Future.fork
     (code => {
