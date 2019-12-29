@@ -27,15 +27,15 @@ const getRouteData = method => routeArray =>
     (routes);
 
 const routeHandler = req =>
-S.pipe
-  ([
-    S.prop ('url'),
-    S.splitOn ('/'),
-    S.reject (S.equals ('')),
-    getRouteData (req.method),
-    maybeToFuture (404)
-  ])
-  (req);
+  S.pipe
+    ([
+      S.prop ('url'),
+      S.splitOn ('/'),
+      S.reject (S.equals ('')),
+      getRouteData (req.method),
+      maybeToFuture (404)
+    ])
+    (req);
 
 // handleRequest :: (req, res) -> Future http response
 const handleRequest = (req, res) =>
