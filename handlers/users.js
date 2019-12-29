@@ -8,7 +8,7 @@ const getAllUsers = () => Future.resolve ({ statusCode: 200, body: S.Just (JSON.
 // { id :: String } -> Future Void Response
 const getUserById = ({ id }) =>
   S.maybe (Future.resolve ({ statusCode: 404, body: S.Nothing }))
-          (result => Future.resolve ({ statusCode: 200, body: S.Just (JSON.stringify (result)) }))
+          (user => Future.resolve ({ statusCode: 200, body: S.Just (JSON.stringify (user)) }))
           (S.chain (id => S.find (user => id  === user.id) (users))
                    (S.parseInt (10) (id)));
 
