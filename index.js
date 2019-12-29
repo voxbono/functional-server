@@ -1,9 +1,12 @@
 const http = require ('http');
 const S = require ('sanctuary');
+const $ = require ('sanctuary-def');
 const routes = require ('./state/routes');
 const { matchComponent } = require ('./types/types');
 
-const getRouteData = routeArray =>
+const getRouteHandler = method => S.get (S.is ($.AnyFunction)) (method);
+
+const getRouteData = method => routeArray =>
    S.reduce
     (
       maybeHandler => ([route, routeHandler]) =>
@@ -13,8 +16,8 @@ const getRouteData = routeArray =>
               S.zip (route),
               S.ap ([S.pair (matchComponent)]),
               S.sequence (S.Maybe),
-              S.map (S.reduce (acc => curr => ({ ...acc, ...curr })) ({})),
-              S.map (routeHandler)
+              S.map (S.reduce (S.concat) ({})),
+              S.ap (getRouteHandler (method) (routeHandler))
             ])
             (routeArray)
           : maybeHandler
@@ -22,13 +25,13 @@ const getRouteData = routeArray =>
     (S.Nothing)
     (routes);
 
-const routeHandler = S.pipe ([
+const routeHandler = req => S.pipe ([
   req => req.url,
   S.splitOn ('/'),
   S.reject (S.equals ('')),
-  getRouteData,
+  getRouteData (req.method),
   S.maybeToEither (404)
-]);
+]) (req);
 
 // handleRequest :: (req, res) -> http response
 const handleRequest = (req, res) =>

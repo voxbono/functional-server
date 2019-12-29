@@ -5,8 +5,8 @@ const usersHandler = require ('../handlers/users');
 
 
 module.exports = [
-  S.Pair ([]) (indexHandler),
-  S.Pair ([Literal ('users')]) (usersHandler),
-  S.Pair ([Literal ('users'), Capture ('id')]) (data => `The user has id: ${data.id}`),
-  S.Pair ([Literal ('something')]) (data => 'This is something')
+  S.Pair ([]) ({ GET: indexHandler }),
+  S.Pair ([Literal ('users')]) ({ GET: usersHandler }),
+  S.Pair ([Literal ('users'), Capture ('id')]) ({ GET: data => `The user has id: ${data.id}` }),
+  S.Pair ([Literal ('something')]) ({ GET: data => 'This is something' })
 ];
