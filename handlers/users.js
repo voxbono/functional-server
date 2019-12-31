@@ -12,4 +12,10 @@ const getUserById = ({ id }) =>
           (S.chain (id => S.find (user => id  === user.id) (users))
                    (S.parseInt (10) (id)));
 
-module.exports = { getAllUsers, getUserById };
+// { data :: StrMap } -> Future Void Response
+const addUser = ({ data }) =>
+  S.maybe (Future.resolve ({ statusCode: 400, body: S.Nothing }))
+          (d => Future.resolve ({ statusCode: 200, body: S.Just (JSON.stringify (d)) }))
+          (data);
+
+module.exports = { getAllUsers, getUserById, addUser };
