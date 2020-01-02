@@ -25,14 +25,19 @@ const getRouteData = routes => method => reqBody => urlArray =>
            (S.Nothing)
            (routes);
 
-// routeHandler :: NodeRequestWithData -> Future Void Response
-const routeHandler = req =>
+// routeHandler :: Array (Pair (Array Component) (StrMap (StrMap String -> Future Void Resonse)))
+//              -> NodeRequestWithData
+//              -> Future Void Response
+const routeHandler = routes => req =>
   S.fromMaybe (Future.resolve ({ statusCode: 404, body: S.Nothing }))
               (getRouteData (routes)
                             (req.method)
                             (req.body)
                             (S.reject (S.equals (''))
                                       (S.splitOn ('/') (req.url))));
+
+
+// --------------------------- IMPURE--------------------------------------------
 
 // collectRequestData :: NodeRequest -> Future Void ({NodeRequest, Maybe StrMap})
 const collectRequestData = req => Future ((reject, resolve) => {
@@ -57,7 +62,7 @@ const collectRequestData = req => Future ((reject, resolve) => {
 // handleRequest :: (NodeRequest, NodeResponse) -> Future NodeResponse
 const handleRequest = (req, res) =>
   S.pipe ([
-            S.chain (routeHandler),
+            S.chain (routeHandler (routes)),
             Future.fork (_ => {
                         console.log ('OMG! This should not happen');
                         res.writeHead (500);
