@@ -3,7 +3,8 @@ const S = require ('../lib/sanctuary');
 const users = require ('../state/users');
 
 // :: {} -> Future Void Response
-const getAllUsers = () => Future.resolve ({ statusCode: 200, body: S.Just (JSON.stringify (users)) });
+const getAllUsers = () =>
+  Future.resolve ({ statusCode: 200, body: S.Just (JSON.stringify (users)) });
 
 // { id :: String } -> Future Void Response
 const getUserById = ({ id }) =>
