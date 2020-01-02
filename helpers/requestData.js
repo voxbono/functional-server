@@ -9,7 +9,7 @@ const validHeaders = {
 };
 
 // parseRequestData :: String -> String -> Maybe StrMap
-const parseRequestData = header => dataString => {
+const parseRequestBody = header => dataString => {
   switch (header) {
     case validHeaders.FORM_URLENCODED:
       return S.Just (querystring.parse (dataString));
@@ -20,4 +20,10 @@ const parseRequestData = header => dataString => {
   }
 };
 
-module.exports = parseRequestData;
+const parseRequestQuery = url =>
+  S.map (S.reduce (acc => curr =>
+                    S.concat (acc) (querystring.parse (curr)))
+                  ({}))
+        (S.tail (S.splitOn ('?') (url)));
+
+module.exports = { parseRequestBody, parseRequestQuery };

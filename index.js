@@ -3,27 +3,38 @@ const Future = require ('fluture');
 const S = require ('./lib/sanctuary');
 const routes = require ('./state/routes');
 const { matchComponent } = require ('./types/types');
-const parseRequestData = require ('./helpers/requestData');
+const { parseRequestBody, parseRequestQuery } = require ('./helpers/requestData');
 
 // getRouteData :: Array (Pair (Array Component) (StrMap (StrMap String -> Future Void Resonse)))
 //              -> String
 //              -> Array String
-//              -> Maybe StrMap
+//              -> {RequestBody, RequestQuery}
 //              -> Maybe (Future Void Response)
-const getRouteData = routes => method => reqBody => urlArray =>
+const getRouteData = routes => method => reqData => urlArray =>
   S.reduce (maybeHandler => ([components, routeHandler]) =>
               S.maybe_ (() => components.length === urlArray.length
                               ? S.ap (S.value (method) (routeHandler))
-                                     (S.map (S.reduce (S.concat) ({ data: reqBody }))
-                                            (S.sequence (S.Maybe)
-                                                        (S.zipWith (matchComponent)
-                                                                   (components)
-                                                                   (urlArray))))
+                                     (S.map (params => ({ ...reqData, params }))
+                                            (S.map (S.reduce (S.concat) ({}))
+                                                   (S.sequence (S.Maybe)
+                                                               (S.zipWith (matchComponent)
+                                                                          (components)
+                                                                          (urlArray)))))
                               : S.Nothing)
                        (S.Just)
                        (maybeHandler))
            (S.Nothing)
            (routes);
+
+// getUrlArray :: String -> Array String
+const getUrlArray = S.pipe ([
+  S.splitOn ('?'),
+  S.head,
+  S.fromMaybe (''),
+  S.splitOn ('/'),
+  S.reject (S.equals (''))
+]);
+
 
 // routeHandler :: Array (Pair (Array Component) (StrMap (StrMap String -> Future Void Resonse)))
 //              -> NodeRequestWithData
@@ -32,9 +43,8 @@ const routeHandler = routes => req =>
   S.fromMaybe (Future.resolve ({ statusCode: 404, body: S.Nothing }))
               (getRouteData (routes)
                             (req.method)
-                            (req.body)
-                            (S.reject (S.equals (''))
-                                      (S.splitOn ('/') (req.url))));
+                            ({ body: req.body, query: req.query })
+                            (getUrlArray (req.url)));
 
 
 // --------------------------- IMPURE--------------------------------------------
@@ -48,7 +58,11 @@ const collectRequestData = req => Future ((reject, resolve) => {
   });
   req.on ('end', () => {
     const dataString = Buffer.concat (body).toString ();
-    resolve ({ ...req, body: parseRequestData (header) (dataString) });
+    resolve ({
+       ...req,
+       body: S.fromMaybe ({}) (parseRequestBody (header) (dataString)),
+       query: S.fromMaybe ({}) (parseRequestQuery (req.url))
+    });
   });
   req.on ('error', err => {
     resolve ({ ...req, body: S.Nothing });

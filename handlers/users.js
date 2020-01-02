@@ -7,16 +7,14 @@ const getAllUsers = () =>
   Future.resolve ({ statusCode: 200, body: S.Just (JSON.stringify (users)) });
 
 // { id :: String } -> Future Void Response
-const getUserById = ({ id }) =>
+const getUserById = ({ params }) =>
   S.maybe (Future.resolve ({ statusCode: 404, body: S.Nothing }))
           (user => Future.resolve ({ statusCode: 200, body: S.Just (JSON.stringify (user)) }))
           (S.chain (id => S.find (user => id  === user.id) (users))
-                   (S.parseInt (10) (id)));
+                   (S.parseInt (10) (params.id)));
 
 // { data :: StrMap } -> Future Void Response
-const addUser = ({ data }) =>
-  S.maybe (Future.resolve ({ statusCode: 400, body: S.Nothing }))
-          (d => Future.resolve ({ statusCode: 200, body: S.Just (JSON.stringify (d)) }))
-          (data);
+const addUser = ({ body, query }) =>
+  Future.resolve ({ statusCode: 200, body: S.Just (JSON.stringify (S.concat (body) (query))) });
 
 module.exports = { getAllUsers, getUserById, addUser };
