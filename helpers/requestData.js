@@ -20,10 +20,12 @@ const parseRequestBody = header => dataString => {
   }
 };
 
-const parseRequestQuery = url =>
-  S.map (S.reduce (acc => curr =>
-                    S.concat (acc) (querystring.parse (curr)))
-                  ({}))
-        (S.tail (S.splitOn ('?') (url)));
+// parseRequestQuery :: String -> Maybe StrMap
+const parseRequestQuery = S.pipe ([
+  S.splitOn ('?'),
+  S.drop (1),
+  S.chain (S.head),
+  S.map (item => querystring.parse (item)),
+]);
 
 module.exports = { parseRequestBody, parseRequestQuery };
