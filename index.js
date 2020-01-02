@@ -1,9 +1,10 @@
 const http = require ('http');
 const Future = require ('fluture');
-const S = require ('./lib/sanctuary');
-const routes = require ('./state/routes');
-const { matchComponent } = require ('./types/types');
-const { parseRequestBody, parseRequestQuery } = require ('./helpers/requestData');
+const S = require ('./src/lib/sanctuary');
+const routes = require ('./src/routes');
+const { parseRequestBody,
+        parseRequestQuery,
+        matchComponent } = require ('./src/helpers/requestData');
 
 // getRouteData :: Array (Pair (Array Component) (StrMap (StrMap String -> Future Void Resonse)))
 //              -> String

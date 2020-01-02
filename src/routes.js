@@ -1,7 +1,7 @@
-const S = require ('../lib/sanctuary');
-const { Literal, Capture } = require ('../types/types');
-const indexHandler = require ('../handlers/index');
-const { getAllUsers, getUserById, addUser } = require ('../handlers/users');
+const S = require ('./lib/sanctuary');
+const { Literal, Capture } = require ('./lib/types');
+const indexHandler = require ('./handlers/index');
+const { getAllUsers, getUserById, addUser } = require ('./handlers/users');
 
 // routes :: [Pair ([Literal || Capture], StrMap f)]
 module.exports = [

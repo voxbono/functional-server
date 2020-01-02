@@ -8,7 +8,7 @@ const validHeaders = {
   JSON: 'application/json'
 };
 
-// parseRequestData :: String -> String -> Maybe StrMap
+// parseRequestData :: String -> String -> Maybe (StrMap String)
 const parseRequestBody = header => dataString => {
   switch (header) {
     case validHeaders.FORM_URLENCODED:
@@ -20,7 +20,7 @@ const parseRequestBody = header => dataString => {
   }
 };
 
-// parseRequestQuery :: String -> Maybe StrMap
+// parseRequestQuery :: String -> Maybe (StrMap String)
 const parseRequestQuery = S.pipe ([
   S.splitOn ('?'),
   S.drop (1),
@@ -28,4 +28,14 @@ const parseRequestQuery = S.pipe ([
   S.map (item => querystring.parse (item)),
 ]);
 
-module.exports = { parseRequestBody, parseRequestQuery };
+//    matchComponent :: Component -> String -> Maybe (StrMap String)
+const matchComponent = c => s => {
+  switch (c.tagName) {
+    case 'Literal':
+      return s === c.value ? S.Just ({}) : S.Nothing;
+    case 'Capture':
+      return S.Just (S.singleton (c.value) (s));
+  }
+};
+
+module.exports = { parseRequestBody, parseRequestQuery, matchComponent };
