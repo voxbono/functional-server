@@ -4,39 +4,9 @@ const http = require ('http');
 const axios = require ('axios');
 const handleRequest = require ('../src/server');
 const users = require ('../src/state/users');
-const S = require ('../src/lib/sanctuary');
-const Future = require ('fluture');
-const { Literal, Capture } = require ('../src/lib/types');
+const routes = require ('../src/routes');
 
-const routes = [
-  S.Pair ([])
-         ({ GET: () =>
-          Future.resolve ({ statusCode: 200, body: S.Just (JSON.stringify ({ a: 'b' })) }) }),
-  S.Pair ([Literal ('users')])
-         ({ GET: () =>
-          Future.resolve ({ statusCode: 200, body: S.Just (JSON.stringify (users)) }) }),
-  S.Pair ([Literal ('users'), Literal ('add')])
-         ({ POST: ({ body, query }) =>
-          Future.resolve ({
-            statusCode: 200,
-            body: S.Just (JSON.stringify (S.concat (body) (query)))
-          }) }),
-  S.Pair ([Literal ('users'), Capture ('id')])
-         ({ GET: ({ params }) =>
-            S.maybe (Future.resolve ({ statusCode: 404, body: S.Nothing }))
-                    (user =>
-                      Future.resolve ({ statusCode: 200, body: S.Just (JSON.stringify (user)) }))
-                    (S.chain (id => S.find (user => id  === user.id) (users))
-                             (S.parseInt (10) (params.id))) }),
-  S.Pair ([Literal ('withquery')])
-         ({ GET: ({ query }) =>
-          Future.resolve ({
-            statusCode: 200,
-            body: S.Just (JSON.stringify (query))
-          }) }),
-];
 let server;
-
 const rootRoute = 'http://localhost:3001';
 
 beforeAll (done => {
@@ -87,23 +57,64 @@ test ('Get non-existing user',
   })
 );
 
-test ('Get empty query',
-  () => axios.get (`${rootRoute}/withquery`)
+test ('Get existing user with query',
+  () => axios.get (`${rootRoute}/users/query?id=1`)
   .then (res => {
-    expect (res.data).toEqual ({});
+    expect (res.data).toEqual (users.find (user => user.id === 1));
   })
 );
 
+test ('Get non-existing user with query',
+  () => axios.get (`${rootRoute}/users/query?something=1&somethingElse=hey`)
+  .then (res => {
+    fail ('We shuld not end here');
+  })
+  .catch (err => {
+    expect (err.response.status).toBe (404);
+  })
+);
+
+test ('Get empty query',
+  () => axios.get (`${rootRoute}/users/query`)
+  .then (res => {
+    fail ('We shuld not end here');
+  })
+  .catch (err => {
+    expect (err.response.status).toBe (404);
+  })
+);
+
+
 test ('Get query',
-  () => axios.get (`${rootRoute}/withquery?foo=foo&bar=bar`)
+  () => axios.get (`${rootRoute}/querytest?foo=foo&bar=bar`)
   .then (res => {
     expect (res.data).toEqual ({ foo: 'foo', bar: 'bar' });
   })
 );
 
 test ('Get query with equal names',
-  () => axios.get (`${rootRoute}/withquery?foo=foo&foo=bar`)
+  () => axios.get (`${rootRoute}/querytest?foo=foo&foo=bar&baz=baz`)
   .then (res => {
-    expect (res.data).toEqual ({ foo: ['foo', 'bar'] });
+    expect (res.data).toEqual ({ foo: ['foo', 'bar'], baz: 'baz' });
   })
+);
+
+test ('Get body',
+  () => axios.post (`${rootRoute}/users/add`, { id: 1, name: 'Jonas' })
+  .then (res => {
+    expect (res.data).toEqual ({ id: 1, name: 'Jonas' });
+  })
+);
+
+test ('Body query and params in one request',
+  () => axios.post (`${rootRoute}/querytest/1/Peter?foo=foo/&foo=bar&baz=baz`, { a: '%3/æøå' })
+  .then (res => {
+    expect (res.data).toEqual (
+      { a: '%3/æøå',
+        baz: 'baz',
+        foo: ['foo/', 'bar'],
+        id: '1',
+        name: 'Peter'  });
+      }
+  )
 );
