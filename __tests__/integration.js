@@ -57,30 +57,24 @@ test ('Get non-existing user',
   })
 );
 
-test ('Get existing user with query',
-  () => axios.get (`${rootRoute}/users/query?id=1`)
+test ('Get existing users with query',
+  () => axios.get (`${rootRoute}/users/query?id=1&id=2`)
   .then (res => {
-    expect (res.data).toEqual (users.find (user => user.id === 1));
+    expect (res.data).toEqual (users.filter (user => user.id === 1 || user.id === 2));
   })
 );
 
-test ('Get non-existing user with query',
+test ('Get non-existing users with query',
   () => axios.get (`${rootRoute}/users/query?something=1&somethingElse=hey`)
   .then (res => {
-    fail ('We shuld not end here');
-  })
-  .catch (err => {
-    expect (err.response.status).toBe (404);
+    expect (res.data).toEqual ([{}]);
   })
 );
 
 test ('Get empty query',
   () => axios.get (`${rootRoute}/users/query`)
   .then (res => {
-    fail ('We shuld not end here');
-  })
-  .catch (err => {
-    expect (err.response.status).toBe (404);
+    expect (res.data).toEqual ([{}]);
   })
 );
 
@@ -88,14 +82,14 @@ test ('Get empty query',
 test ('Get query',
   () => axios.get (`${rootRoute}/querytest?foo=foo&bar=bar`)
   .then (res => {
-    expect (res.data).toEqual ({ foo: 'foo', bar: 'bar' });
+    expect (res.data).toEqual ({ foo: ['foo'], bar: ['bar'] });
   })
 );
 
 test ('Get query with equal names',
   () => axios.get (`${rootRoute}/querytest?foo=foo&foo=bar&baz=baz`)
   .then (res => {
-    expect (res.data).toEqual ({ foo: ['foo', 'bar'], baz: 'baz' });
+    expect (res.data).toEqual ({ foo: ['foo', 'bar'], baz: ['baz'] });
   })
 );
 
@@ -106,15 +100,35 @@ test ('Get body',
   })
 );
 
-test ('Body query and params in one request',
+test ('Body query and params in one json request',
   () => axios.post (`${rootRoute}/querytest/1/Peter?foo=foo/&foo=bar&baz=baz`, { a: '%3/æøå' })
   .then (res => {
-    expect (res.data).toEqual (
-      { a: '%3/æøå',
-        baz: 'baz',
-        foo: ['foo/', 'bar'],
-        id: '1',
-        name: 'Peter'  });
+    expect (res.data).toEqual ({
+      a: '%3/æøå',
+      baz: ['baz'],
+      foo: ['foo/', 'bar'],
+      id: '1',
+      name: 'Peter'
+    });
+  })
+);
+
+test ('Body query and params in one application/x-www-form-urlencoded request',
+  () => axios.post (
+    `${rootRoute}/querytest/1/Peter?foo=foo/&foo=bar&baz=baz`,
+    'a=%3/æøå',
+    {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
       }
-  )
+    }
+  ).then (res => {
+    expect (res.data).toEqual ({
+      a: ['%3/æøå'],
+      baz: ['baz'],
+      foo: ['foo/', 'bar'],
+      id: '1',
+      name: 'Peter'
+    });
+  })
 );
