@@ -81,9 +81,9 @@ const handleRequest = routes =>  (req, res) =>
   S.pipe ([
             S.chain (routeHandler (routes)),
             Future.fork (_ => {
-                        console.log ('OMG! This should not happen');
-                        res.writeHead (500);
-                        res.end (JSON.stringify (http.STATUS_CODES[500]));
+                          console.log ('OMG! This should not happen');
+                          res.writeHead (500);
+                          res.end (JSON.stringify (http.STATUS_CODES[500]));
                         })
                         (({ statusCode, body }) => {
                           res.writeHead (statusCode);
