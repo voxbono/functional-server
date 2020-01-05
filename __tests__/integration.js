@@ -7,16 +7,16 @@ const users = require ('../src/state/users');
 const routes = require ('../src/routes');
 
 let server;
-const rootRoute = 'http://localhost:3001';
+const rootRoute = 'http://localhost:3000';
 
-beforeAll (done => {
-  server = http.createServer (handleRequest (routes));
-  server.listen (3001, null, done);
-});
-
-afterAll (done => {
-  server.close (done);
-});
+// beforeAll (done => {
+// server = http.createServer (handleRequest (routes));
+// server.listen (3001, null, done);
+// });
+//
+// afterAll (done => {
+// server.close (done);
+// });
 
 test ('Invalid route', () => axios.get (`${rootRoute}/silly`).then (res => {
   fail ('We shuld not end here');
