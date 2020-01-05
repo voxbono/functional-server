@@ -7,26 +7,24 @@ const validHeaders = {
   JSON: 'application/json'
 };
 
-// getHeadAsString :: Array String -> String
-const getHeadAsString = item => S.fromMaybe ('') (S.head (item));
+// maybeMergeArrays :: Array a -> Maybe Array a -> Array a
+const maybeMergeArrays = list => S.maybe (list) (a => S.concat (a) (list));
 
-// getTailAsArray :: Array String -> Array String
-const getTailAsArray = item => S.fromMaybe ([]) (S.tail (item));
-
-// getkeyAsString :: Object -> String
-const getkeyAsString = item => S.fromMaybe ('') (S.head (Object.keys (item)));
+// mergeStrMapWithArray :: StrMap (Array a) -> a -> Array a -> StrMap (Array a)
+const mergeStrMapWithArray = obj => a => list =>
+  S.concat (obj)
+           (S.singleton (a)
+                        (maybeMergeArrays (list)
+                                        (S.value (a) (obj))));
 
 // parseQueryString :: String -> StrMap (Array String)
 const parseQueryString = S.pipe ([
   S.splitOn ('&'),
-  S.map (S.splitOn ('=')),
-  S.map (item => S.singleton (getHeadAsString (item)) (getTailAsArray (item))),
-  S.reduce (acc => curr => {
-    const key = getkeyAsString (curr);
-    return acc[key]
-     ? S.concat (acc) ({ [key]: S.concat (acc[key]) (curr[key]) })
-     : S.concat (acc) (curr);
-  }) ({})
+  S.reduce (acc => curr =>
+            S.array ({})
+                    (mergeStrMapWithArray (acc))
+                    (S.splitOn ('=') (curr)))
+           ({})
 ]);
 
 // parseRequestData :: String -> String -> Maybe (StrMap String) || Maybe (StrMap (Array String))
@@ -46,7 +44,7 @@ const parseRequestQuery = S.pipe ([
   S.splitOn ('?'),
   S.drop (1),
   S.chain (S.head),
-  S.map (item => parseQueryString (item))
+  S.map (parseQueryString)
 ]);
 
 //    matchComponent :: Component -> String -> Maybe (StrMap String)
