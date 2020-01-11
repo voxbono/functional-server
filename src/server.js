@@ -4,6 +4,7 @@ const S = require ('./lib/sanctuary');
 const { parseRequestBody,
         parseRequestQuery,
         matchComponent } = require ('./helpers/requestData');
+const routes = require ('./routes');
 
 
 // getRouteData :: Array (Pair (Array Component) (StrMap (StrMap String -> Future Void Resonse)))
@@ -86,10 +87,11 @@ const handleRequest = routes =>  (req, res) =>
                           res.end (JSON.stringify (http.STATUS_CODES[500]));
                         })
                         (({ statusCode, body }) => {
-                          res.writeHead (statusCode);
+                          res.statusCode = statusCode;
+                          res.setHeader ('Content-Type', 'application/json');
                           S.maybe_ (() => res.end ()) (s => res.end (s)) (body);
                         })
         ])
         (collectRequestData (req));
 
-module.exports = handleRequest;
+module.exports = handleRequest (routes);

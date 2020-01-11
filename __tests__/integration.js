@@ -1,134 +1,115 @@
 /* eslint no-undef: 0 */
 /* eslint node/no-unpublished-require: 0 */
-const http = require ('http');
-const axios = require ('axios');
-const handleRequest = require ('../src/server');
+const request = require ('supertest');
+const app = require ('../src/server');
 const users = require ('../src/state/users');
-const routes = require ('../src/routes');
 
-let server;
-const rootRoute = 'http://localhost:3000';
+describe ('Trying out some stuff', () => {
+  test ('Invalid route', () =>
+    request (app)
+    .get ('/silly')
+    .then (res => {
+      expect (res.error.status).toBe (404);
+    }));
 
-// beforeAll (done => {
-// server = http.createServer (handleRequest (routes));
-// server.listen (3001, null, done);
-// });
-//
-// afterAll (done => {
-// server.close (done);
-// });
+  test ('Index route', () =>
+    request (app)
+    .get ('/')
+    .then (res => {
+      expect (res.body).toEqual ({ 'a': 'b' });
+    }));
 
-test ('Invalid route', () => axios.get (`${rootRoute}/silly`).then (res => {
-  fail ('We shuld not end here');
-}).catch (err => {
-  expect (err.response.status).toBe (404);
-}));
+  test ('Users route', () =>
+    request (app)
+    .get ('/users')
+    .then (res => {
+      expect (res.status).toBe (200);
+      expect (res.body).toEqual (users);
+    }));
 
-test ('Index route', () => axios.get (rootRoute).then (res => {
-  expect (res.data).toEqual ({ 'a': 'b' });
-}));
+  test ('Add user', () =>
+    request (app)
+    .post ('/users/add')
+    .send ({ id: 1, name: 'Jonas' })
+    .then (res => {
+      expect (res.body).toEqual ({ id: 1, name: 'Jonas' });
+    }));
 
-test ('Users route', () => axios.get (`${rootRoute}/users`).then (res => {
-  expect (res.status).toBe (200);
-  expect (res.data).toEqual (users);
-}));
+  test ('Get existing user', () =>
+    request (app)
+    .get ('/users/1')
+    .then (res => {
+      expect (res.body).toEqual (users.find (user => user.id === 1));
+    }));
 
-test ('Add user',
-  () => axios.post (`${rootRoute}/users/add`, { id: 1, name: 'Jonas' })
-  .then (res => {
-    expect (res.data).toEqual ({ id: 1, name: 'Jonas' });
-  })
-);
+  test ('Get non-existing user', () =>
+    request (app)
+    .get ('/users/5')
+    .then (res => {
+      expect (res.error.status).toBe (404);
+    }));
 
-test ('Get existing user',
-  () => axios.get (`${rootRoute}/users/1`)
-  .then (res => {
-    expect (res.data).toEqual (users.find (user => user.id === 1));
-  })
-);
+  test ('Get existing users with query', () =>
+    request (app)
+    .get ('/users/query?id=1&id=2')
+    .then (res => {
+      expect (res.body).toEqual (users.filter (user => user.id === 1 || user.id === 2));
+    }));
 
-test ('Get non-existing user',
-  () => axios.get (`${rootRoute}/users/5`)
-  .then (res => {
-    fail ('We shuld not end here');
-  })
-  .catch (err => {
-    expect (err.response.status).toBe (404);
-  })
-);
+  test ('Get non-existing users with query', () =>
+    request (app)
+    .get ('/users/query?something=1&somethingElse=hey')
+    .then (res => {
+      expect (res.body).toEqual ([{}]);
+    }));
 
-test ('Get existing users with query',
-  () => axios.get (`${rootRoute}/users/query?id=1&id=2`)
-  .then (res => {
-    expect (res.data).toEqual (users.filter (user => user.id === 1 || user.id === 2));
-  })
-);
+  test ('Get empty query', () =>
+    request (app)
+    .get ('/users/query')
+    .then (res => {
+      expect (res.body).toEqual ([{}]);
+    }));
 
-test ('Get non-existing users with query',
-  () => axios.get (`${rootRoute}/users/query?something=1&somethingElse=hey`)
-  .then (res => {
-    expect (res.data).toEqual ([{}]);
-  })
-);
+  test ('Get query', () =>
+    request (app)
+    .get ('/querytest?foo=foo&bar=bar')
+    .then (res => {
+      expect (res.body).toEqual ({ foo: ['foo'], bar: ['bar'] });
+    }));
 
-test ('Get empty query',
-  () => axios.get (`${rootRoute}/users/query`)
-  .then (res => {
-    expect (res.data).toEqual ([{}]);
-  })
-);
+  test ('Get query with equal names', () =>
+    request (app)
+    .get ('/querytest?foo=foo&foo=bar&baz=baz')
+    .then (res => {
+      expect (res.body).toEqual ({ foo: ['foo', 'bar'], baz: ['baz'] });
+    }));
 
+  test ('Body query and params in one json request', () =>
+    request (app)
+    .post ('/querytest/1/Peter?foo=foo/&foo=bar&baz=baz')
+    .send ({ a: '%3/æøå' })
+    .then (res => {
+      expect (res.body).toEqual ({
+        a: '%3/æøå',
+        baz: ['baz'],
+        foo: ['foo/', 'bar'],
+        id: '1',
+        name: 'Peter'
+      });
+    }));
 
-test ('Get query',
-  () => axios.get (`${rootRoute}/querytest?foo=foo&bar=bar`)
-  .then (res => {
-    expect (res.data).toEqual ({ foo: ['foo'], bar: ['bar'] });
-  })
-);
-
-test ('Get query with equal names',
-  () => axios.get (`${rootRoute}/querytest?foo=foo&foo=bar&baz=baz`)
-  .then (res => {
-    expect (res.data).toEqual ({ foo: ['foo', 'bar'], baz: ['baz'] });
-  })
-);
-
-test ('Get body',
-  () => axios.post (`${rootRoute}/users/add`, { id: 1, name: 'Jonas' })
-  .then (res => {
-    expect (res.data).toEqual ({ id: 1, name: 'Jonas' });
-  })
-);
-
-test ('Body query and params in one json request',
-  () => axios.post (`${rootRoute}/querytest/1/Peter?foo=foo/&foo=bar&baz=baz`, { a: '%3/æøå' })
-  .then (res => {
-    expect (res.data).toEqual ({
-      a: '%3/æøå',
-      baz: ['baz'],
-      foo: ['foo/', 'bar'],
-      id: '1',
-      name: 'Peter'
-    });
-  })
-);
-
-test ('Body query and params in one application/x-www-form-urlencoded request',
-  () => axios.post (
-    `${rootRoute}/querytest/1/Peter?foo=foo/&foo=bar&baz=baz`,
-    'a=%3/æøå',
-    {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
-    }
-  ).then (res => {
-    expect (res.data).toEqual ({
-      a: ['%3/æøå'],
-      baz: ['baz'],
-      foo: ['foo/', 'bar'],
-      id: '1',
-      name: 'Peter'
-    });
-  })
-);
+  test ('Body query and params in one application/x-www-form-urlencoded request', () =>
+    request (app)
+    .post ('/querytest/1/Peter?foo=foo/&foo=bar&baz=baz')
+    .send ({ a: '%3/æøå' })
+    .set ('Content-Type', 'application/x-www-form-urlencoded')
+    .then (res => {
+      expect (res.body).toEqual ({
+        a: ['%253%2F%C3%A6%C3%B8%C3%A5'],
+        baz: ['baz'],
+        foo: ['foo/', 'bar'],
+        id: '1',
+        name: 'Peter'
+      });
+    }));
+});
