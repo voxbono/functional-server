@@ -1,32 +1,33 @@
 const http = require ('http');
 const Future = require ('fluture');
 const S = require ('./lib/sanctuary');
-const { parseRequestBody,
-        parseRequestQuery,
-        matchComponent } = require ('./helpers/requestData');
+const $ = require ('sanctuary-def');
+const { matchComponent, f } = require ('./helpers/requestData');
 const routes = require ('./routes');
 
-
-// getRouteData :: Array (Pair (Array Component) (StrMap (StrMap String -> Future Void Resonse)))
-//              -> String
-//              -> Array String
-//              -> {RequestBody, RequestQuery}
-//              -> Maybe (Future Void Response)
-const getRouteData = routes => method => reqData => urlArray =>
-  S.reduce (maybeHandler => ([components, routeHandler]) =>
-              S.maybe_ (() => components.length === urlArray.length
-                              ? S.ap (S.value (method) (routeHandler))
-                                     (S.map (params => ({ ...reqData, params }))
-                                            (S.map (S.reduce (S.concat) ({}))
-                                                   (S.sequence (S.Maybe)
-                                                               (S.zipWith (matchComponent)
-                                                                          (components)
-                                                                          (urlArray)))))
-                              : S.Nothing)
-                       (S.Just)
-                       (maybeHandler))
-           (S.Nothing)
-           (routes);
+// getRouteHandlerFuture :: Array (Pair (Array Component) (StrMap (String -> Maybe String -> String -> Future Void Response)))
+//                       -> Pair NodeRequest String
+//                       -> Future Void Response
+const getRouteHandlerFuture =  routes => ([req, body]) => {
+  const urlArray = getUrlArray (req.url);
+  return S.fromMaybe (Future.resolve ({ statusCode: 404, body: S.Nothing }))
+                     (S.reduce (maybeHandler => ([components, routeHandlers]) =>
+                                  S.maybe_ (() => components.length === urlArray.length
+                                                ? S.lift2 (handler => handler (req.url)
+                                                                              (S.value ('content-type') (req.headers))
+                                                                              (body))
+                                                          (S.value (req.method) (routeHandlers))
+                                                          (S.map (S.reduce (S.concat) ({}))
+                                                                 (S.sequence (S.Maybe)
+                                                                             (S.zipWith (matchComponent)
+                                                                                        (components)
+                                                                                        (urlArray))))
+                                                : S.Nothing)
+                                           (S.Just)
+                                           (maybeHandler))
+                               (S.Nothing)
+                               (routes));
+};
 
 // getUrlArray :: String -> Array String
 const getUrlArray = S.pipe ([
@@ -38,36 +39,20 @@ const getUrlArray = S.pipe ([
 ]);
 
 
-// routeHandler :: Array (Pair (Array Component) (StrMap (StrMap String -> Future Void Resonse)))
-//              -> NodeRequestWithData
-//              -> Future Void Response
-const routeHandler = routes => req =>
-  S.fromMaybe (Future.resolve ({ statusCode: 404, body: S.Nothing }))
-              (getRouteData (routes)
-                            (req.method)
-                            ({ body: req.body, query: req.query })
-                            (getUrlArray (req.url)));
-
-
 // --------------------------- IMPURE--------------------------------------------
 
-// collectRequestData :: NodeRequest -> Future Void ({NodeRequest, Maybe StrMap})
+// collectRequestData :: NodeRequest -> Future Void (Pair NodeRequest String)
 const collectRequestData = req => Future ((reject, resolve) => {
   const body = [];
-  const header = req.headers['content-type'];
   req.on ('data', chunk => {
     body.push (chunk);
   });
   req.on ('end', () => {
     const dataString = Buffer.concat (body).toString ();
-    resolve ({
-       ...req,
-       body: S.fromMaybe ({}) (parseRequestBody (header) (dataString)),
-       query: S.fromMaybe ({}) (parseRequestQuery (req.url))
-    });
+    resolve (S.Pair (req) (dataString));
   });
   req.on ('error', err => {
-    resolve ({ ...req, body: S.Nothing });
+    resolve (S.Pair (req) (''));
   });
   return function onCancel() {
     req.off ('data');
@@ -80,7 +65,7 @@ const collectRequestData = req => Future ((reject, resolve) => {
 //               -> Future NodeResponse
 const handleRequest = routes =>  (req, res) =>
   S.pipe ([
-            S.chain (routeHandler (routes)),
+            S.chain (getRouteHandlerFuture (routes)),
             Future.fork (_ => {
                           console.log ('OMG! This should not happen');
                           res.writeHead (500);

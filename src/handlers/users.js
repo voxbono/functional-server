@@ -35,8 +35,8 @@ const getUsersWithQuery = ({ query }) =>
     body: S.Just (JSON.stringify (findUsersByIds (users) (S.value ('id') (query))))
 });
 
-// { body :: StrMap (Array String), query :: StrMap (Array String)} -> Future Void Response
-const addUser = ({ body }) =>
-  Future.resolve ({ statusCode: 200, body: S.Just (JSON.stringify (body)) });
+//  addUser:: {email:: String} -> {} -> StrMap (Array String) -> Future Void Response
+const addUser = ({ id, name, email }) => params => query =>
+  Future.resolve ({ statusCode: 200, body: S.Just (JSON.stringify ({ id, name, email })) });
 
 module.exports = { getAllUsers, getUserById, addUser, getUsersWithQuery };

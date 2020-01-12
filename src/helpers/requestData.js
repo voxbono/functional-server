@@ -1,5 +1,7 @@
 const S = require ('../lib/sanctuary');
 const $ = require ('sanctuary-def');
+const def = require ('../lib/def');
+const Future = require ('fluture');
 
 // validHeaders :: StrMap
 const validHeaders = {
@@ -27,17 +29,27 @@ const parseQueryString = S.pipe ([
            ({})
 ]);
 
-// parseRequestData :: String -> String -> Maybe (StrMap String) || Maybe (StrMap (Array String))
-const parseRequestBody = header => dataString => {
-  switch (header) {
-    case validHeaders.FORM_URLENCODED:
-      return S.Just (parseQueryString (dataString));
-    case validHeaders.JSON:
-      return S.parseJson (S.is ($.Any)) (dataString);
-    default:
-      return S.parseJson (S.is ($.Any)) (dataString);
-  }
-};
+const a = $.TypeVariable ('a');
+// parseRequestData :: (a -> Bool)
+//                  -> Maybe String
+//                  -> String
+//                  -> Maybe a
+const parseRequestBody =
+  def ('parseRequestBody')
+      ({})
+      ([$.Predicate (a), $.Maybe ($.String), $.String, $.Maybe (a)])
+      (pred => contentType => dataString =>
+        S.chain (contentType => {
+                  switch (contentType) {
+                    case validHeaders.FORM_URLENCODED:
+                      return S.Just (parseQueryString (dataString));
+                    case validHeaders.JSON:
+                      return S.parseJson (pred) (dataString);
+                    default:
+                      return S.Nothing;
+                  }
+                })
+                (contentType));
 
 // parseRequestQuery :: String -> Maybe (StrMap (Array String))
 const parseRequestQuery = S.pipe ([
@@ -46,6 +58,19 @@ const parseRequestQuery = S.pipe ([
   S.chain (S.head),
   S.map (parseQueryString)
 ]);
+
+// getResponse :: Type a
+//             -> (a -> StrMap String -> StrMap String -> Future Void Response)
+//             -> String
+//             -> Maybe Sring
+//             -> String
+//             -> StrMap String
+//             -> Future Void Response
+const getResponse = bodyType => handler => url => contentType => body => params =>
+  S.maybe (Future.resolve ({ statusCode: 422, body: S.Nothing }))
+          (body => handler (body) (params) (S.fromMaybe ({}) (parseRequestQuery (url))))
+          (parseRequestBody (S.is (bodyType)) (contentType) (body));
+
 
 //    matchComponent :: Component -> String -> Maybe (StrMap String)
 const matchComponent = c => s => {
@@ -57,4 +82,4 @@ const matchComponent = c => s => {
   }
 };
 
-module.exports = { parseRequestBody, parseRequestQuery, matchComponent };
+module.exports = { parseRequestBody, parseRequestQuery, matchComponent, getResponse };

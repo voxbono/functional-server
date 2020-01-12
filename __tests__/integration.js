@@ -16,6 +16,7 @@ describe ('Trying out some stuff', () => {
     request (app)
     .get ('/')
     .then (res => {
+      expect (res.status).toBe (200);
       expect (res.body).toEqual ({ 'a': 'b' });
     }));
 
@@ -30,9 +31,9 @@ describe ('Trying out some stuff', () => {
   test ('Add user', () =>
     request (app)
     .post ('/users/add')
-    .send ({ id: 1, name: 'Jonas' })
+    .send ({ id: 1, name: 'Jonas', email: 'test@test.com' })
     .then (res => {
-      expect (res.body).toEqual ({ id: 1, name: 'Jonas' });
+      expect (res.body).toEqual ({ id: 1, name: 'Jonas', email: 'test@test.com' });
     }));
 
   test ('Get existing user', () =>
