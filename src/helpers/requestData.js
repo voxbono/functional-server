@@ -59,17 +59,23 @@ const parseRequestQuery = S.pipe ([
   S.map (parseQueryString)
 ]);
 
-// getResponse :: Type a
+// getResponse :: Maybe (Type a)
 //             -> (a -> StrMap String -> StrMap String -> Future Void Response)
 //             -> String
 //             -> Maybe Sring
 //             -> String
 //             -> StrMap String
 //             -> Future Void Response
-const getResponse = bodyType => handler => url => contentType => body => params =>
-  S.maybe (Future.resolve ({ statusCode: 422, body: S.Nothing }))
-          (body => handler (body) (params) (S.fromMaybe ({}) (parseRequestQuery (url))))
-          (parseRequestBody (S.is (bodyType)) (contentType) (body));
+const getResponse = maybeBodyType => handler => url => contentType => body => params =>
+  S.maybe_
+    (_ => Future.resolve (handler ({}) (params) (S.fromMaybe ({}) (parseRequestQuery (url)))))
+    (bodyType => S.maybe (Future.resolve ({ statusCode: 422, body: S.Nothing }))
+                         (body => Future.resolve (handler (body)
+                                                          (params)
+                                                          (S.fromMaybe ({})
+                                                                       (parseRequestQuery (url)))))
+                         (parseRequestBody (S.is (bodyType)) (contentType) (body)))
+    (maybeBodyType);
 
 
 //    matchComponent :: Component -> String -> Maybe (StrMap String)

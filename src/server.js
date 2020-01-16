@@ -1,11 +1,13 @@
 const http = require ('http');
 const Future = require ('fluture');
 const S = require ('./lib/sanctuary');
-const $ = require ('sanctuary-def');
-const { matchComponent, f } = require ('./helpers/requestData');
+const { matchComponent } = require ('./helpers/requestData');
 const routes = require ('./routes');
 
-// getRouteHandlerFuture :: Array (Pair (Array Component) (StrMap (String -> Maybe String -> String -> Future Void Response)))
+// Handler :: a -> StrMap String -> StrMap String -> Object Response
+// partiallyGetResponse :: string -> Maybe String -> String -> StrMap Sring-> Future Void Response
+// Route::  Pair [Component] (StrMap (Maybe (Type a) -> Handler -> partiallyGetResponse))
+// getRouteHandlerFuture :: [Route]
 //                       -> Pair NodeRequest String
 //                       -> Future Void Response
 const getRouteHandlerFuture =  routes => ([req, body]) => {
@@ -13,15 +15,18 @@ const getRouteHandlerFuture =  routes => ([req, body]) => {
   return S.fromMaybe (Future.resolve ({ statusCode: 404, body: S.Nothing }))
                      (S.reduce (maybeHandler => ([components, routeHandlers]) =>
                                   S.maybe_ (() => components.length === urlArray.length
-                                                ? S.lift2 (handler => handler (req.url)
-                                                                              (S.value ('content-type') (req.headers))
-                                                                              (body))
+                                                ? S.lift2 (handler => handler
+                                                                        (req.url)
+                                                                        (S.value ('content-type')
+                                                                                  (req.headers))
+                                                                        (body))
                                                           (S.value (req.method) (routeHandlers))
                                                           (S.map (S.reduce (S.concat) ({}))
-                                                                 (S.sequence (S.Maybe)
-                                                                             (S.zipWith (matchComponent)
-                                                                                        (components)
-                                                                                        (urlArray))))
+                                                                 (S.sequence
+                                                                    (S.Maybe)
+                                                                    (S.zipWith (matchComponent)
+                                                                              (components)
+                                                                              (urlArray))))
                                                 : S.Nothing)
                                            (S.Just)
                                            (maybeHandler))
