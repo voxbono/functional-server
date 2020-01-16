@@ -19,24 +19,23 @@ const findUsersByIds = users => S.pipe ([
 ]);
 
 // :: {} -> Future Void Response
-const getAllUsers = () =>
-  Future.resolve ({ statusCode: 200, body: S.Just (JSON.stringify (users)) });
+const getAllUsers = body => params => query =>
+  ({ statusCode: 200, body: S.Just (JSON.stringify (users)) });
 
 // { params :: StrMap } -> Future Void Response
-const getUserById = ({ params }) =>
-  S.maybe (Future.resolve ({ statusCode: 404, body: S.Nothing }))
-          (user => Future.resolve ({ statusCode: 200, body: S.Just (JSON.stringify (user)) }))
+const getUserById = body => params => query =>
+  S.maybe ({ statusCode: 404, body: S.Nothing })
+          (user => ({ statusCode: 200, body: S.Just (JSON.stringify (user)) }))
           (findUserById (users) (S.value ('id') (params)));
 
 // { Query :: StrMap (Array String)} -> Future Void Response
-const getUsersWithQuery = ({ query }) =>
-  Future.resolve ({
-    statusCode: 200,
-    body: S.Just (JSON.stringify (findUsersByIds (users) (S.value ('id') (query))))
+const getUsersWithQuery = body => params => query => ({
+  statusCode: 200,
+  body: S.Just (JSON.stringify (findUsersByIds (users) (S.value ('id') (query))))
 });
 
-// { body :: StrMap (Array String), query :: StrMap (Array String)} -> Future Void Response
-const addUser = ({ body }) =>
-  Future.resolve ({ statusCode: 200, body: S.Just (JSON.stringify (body)) });
+//  addUser:: {email:: String} -> {} -> StrMap (Array String) -> Future Void Response
+const addUser = ({ id, name, email }) => params => query =>
+  ({ statusCode: 200, body: S.Just (JSON.stringify ({ id, name, email })) });
 
 module.exports = { getAllUsers, getUserById, addUser, getUsersWithQuery };

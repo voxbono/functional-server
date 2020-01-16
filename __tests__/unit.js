@@ -1,6 +1,7 @@
 /* eslint no-undef: 0 */
 
 const S = require ('../src/lib/sanctuary');
+const $ = require ('sanctuary-def');
 const { parseRequestBody, parseRequestQuery } = require ('../src/helpers/requestData');
 
 test ('No queries', () => {
@@ -25,6 +26,6 @@ test ('Weird query', () => {
 });
 
 test ('Request body application/json', () => {
-  const result = parseRequestBody ('application/json') ('{"a":"%3/æøå"}');
+  const result = parseRequestBody (S.is ($.Any)) (S.Just ('application/json')) ('{"a":"%3/æøå"}');
   expect (result).toEqual (S.Just ({ 'a': '%3/æøå' }));
 });
