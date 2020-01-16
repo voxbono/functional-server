@@ -1,4 +1,3 @@
-const Future = require ('fluture');
 const S = require ('../lib/sanctuary');
 const users = require ('../state/users');
 
