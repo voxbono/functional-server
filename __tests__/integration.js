@@ -115,4 +115,35 @@ describe ('Trying out some stuff', () => {
         name: 'Peter'
       });
     }));
+  test ('Login with authorization header', () =>
+    request (app)
+    .get ('/querytest/login')
+    .set ('Authorization', 'password')
+    .then (res => {
+      expect (res.body).toEqual ({ user: 'User 1' });
+    })
+  );
+  test ('Login without authorization header', () =>
+    request (app)
+    .get ('/querytest/login')
+    .then (res => {
+      expect (res.status).toBe (401);
+    })
+  );
+  test ('Login with wrong authorization header', () =>
+    request (app)
+    .get ('/querytest/login')
+    .set ('Authorization', 'wrongpassword')
+    .then (res => {
+      expect (res.status).toBe (401);
+    })
+  );
+  test ('Login with authorization header', () =>
+    request (app)
+    .get ('/querytest/login')
+    .set ('Authorization', 'password')
+    .then (res => {
+      expect (res.body).toEqual ({ user: 'User 1' });
+    })
+  );
 });

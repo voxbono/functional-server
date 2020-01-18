@@ -8,7 +8,13 @@ const bodyQueryParamTest = headers => body => params => query => ({
   body: S.Just (JSON.stringify (S.concat (body) (S.concat (query) (params))))
 });
 
+const loginTest = headers => body => params => query => user => ({
+  statusCode: 200,
+  body: S.Just (JSON.stringify ({ user }))
+});
+
 module.exports = {
   queryTest,
-  bodyQueryParamTest
+  bodyQueryParamTest,
+  loginTest
 };
