@@ -18,23 +18,23 @@ const findUsersByIds = users => S.pipe ([
 ]);
 
 // :: {} -> Future Void Response
-const getAllUsers = body => params => query =>
+const getAllUsers = headers => body => params => query =>
   ({ statusCode: 200, body: S.Just (JSON.stringify (users)) });
 
 // { params :: StrMap } -> Future Void Response
-const getUserById = body => params => query =>
+const getUserById = headers => body => params => query =>
   S.maybe ({ statusCode: 404, body: S.Nothing })
           (user => ({ statusCode: 200, body: S.Just (JSON.stringify (user)) }))
           (findUserById (users) (S.value ('id') (params)));
 
 // { Query :: StrMap (Array String)} -> Future Void Response
-const getUsersWithQuery = body => params => query => ({
+const getUsersWithQuery = headers => body => params => query => ({
   statusCode: 200,
   body: S.Just (JSON.stringify (findUsersByIds (users) (S.value ('id') (query))))
 });
 
 //  addUser:: {email:: String} -> {} -> StrMap (Array String) -> Future Void Response
-const addUser = ({ id, name, email }) => params => query =>
+const addUser = headers => ({ id, name, email }) => params => query =>
   ({ statusCode: 200, body: S.Just (JSON.stringify ({ id, name, email })) });
 
 module.exports = { getAllUsers, getUserById, addUser, getUsersWithQuery };

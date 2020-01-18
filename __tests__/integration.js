@@ -31,6 +31,8 @@ describe ('Trying out some stuff', () => {
   test ('Add user', () =>
     request (app)
     .post ('/users/add')
+    .set ('Content-Type', 'application/json')
+    .set ('Accept', 'applicaton/json')
     .send ({ id: 1, name: 'Jonas', email: 'test@test.com' })
     .then (res => {
       expect (res.body).toEqual ({ id: 1, name: 'Jonas', email: 'test@test.com' });

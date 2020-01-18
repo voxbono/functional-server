@@ -66,15 +66,21 @@ const parseRequestQuery = S.pipe ([
 //             -> String
 //             -> StrMap String
 //             -> Future Void Response
-const getResponse = maybeBodyType => handler => url => contentType => body => params =>
+const getResponse = maybeBodyType => handler => url => headers => body => params =>
   S.maybe_
-    (_ => Future.resolve (handler ({}) (params) (S.fromMaybe ({}) (parseRequestQuery (url)))))
+    (_ => Future.resolve (handler (headers)
+                                  ({})
+                                  (params)
+                                  (S.fromMaybe ({})
+                                  (parseRequestQuery (url)))))
     (bodyType => S.maybe (Future.resolve ({ statusCode: 422, body: S.Nothing }))
-                         (body => Future.resolve (handler (body)
+                         (body => Future.resolve (handler (headers)
+                                                          (body)
                                                           (params)
                                                           (S.fromMaybe ({})
                                                                        (parseRequestQuery (url)))))
-                         (parseRequestBody (S.is (bodyType)) (contentType) (body)))
+                         (parseRequestBody (S.is (bodyType))
+                                           (S.value ('content-type') (headers)) (body)))
     (maybeBodyType);
 
 

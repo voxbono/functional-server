@@ -13,14 +13,14 @@ const routes = require ('./routes');
 const getRouteHandlerFuture =  routes => ([req, body]) => {
   const urlArray = getUrlArray (req.url);
   return S.fromMaybe (Future.resolve ({ statusCode: 404, body: S.Nothing }))
-                     (S.reduce (maybeHandler => ([components, routeHandlers]) =>
+                     (S.reduce (maybeResponseHandler => ([components, routeResponseHandlers]) =>
                                   S.maybe_ (() => components.length === urlArray.length
-                                                ? S.lift2 (handler => handler
+                                                ? S.lift2 (responseHandler => responseHandler
                                                                         (req.url)
-                                                                        (S.value ('content-type')
-                                                                                  (req.headers))
+                                                                        (req.headers)
                                                                         (body))
-                                                          (S.value (req.method) (routeHandlers))
+                                                          (S.value (req.method)
+                                                                   (routeResponseHandlers))
                                                           (S.map (S.reduce (S.concat) ({}))
                                                                  (S.sequence
                                                                     (S.Maybe)
@@ -29,7 +29,7 @@ const getRouteHandlerFuture =  routes => ([req, body]) => {
                                                                               (urlArray))))
                                                 : S.Nothing)
                                            (S.Just)
-                                           (maybeHandler))
+                                           (maybeResponseHandler))
                                (S.Nothing)
                                (routes));
 };
