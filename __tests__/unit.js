@@ -26,6 +26,6 @@ test ('Weird query', () => {
 });
 
 test ('Request body application/json', () => {
-  const result = parseRequestBody (S.is ($.Any)) (S.Just ('application/json')) ('{"a":"%3/æøå"}');
+  const result = parseRequestBody (S.Just ($.Any)) (S.Just ('application/json')) ('{"a":"%3/æøå"}');
   expect (result).toEqual (S.Just ({ 'a': '%3/æøå' }));
 });

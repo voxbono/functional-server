@@ -1,5 +1,6 @@
 const $ = require ('sanctuary-def');
 const S = require ('./lib/sanctuary');
+const Future = require ('fluture');
 const { Literal, Capture } = require ('./types/Component');
 const indexHandler = require ('./handlers/index');
 const { getResponse } = require ('./helpers/requestData');
@@ -10,10 +11,10 @@ const userRecordType = S.Just ($.RecordType ({ id: $.Integer, name: $.String, em
 
 const validateAuth = auth => auth === 'password' ? S.Just ('User 1') : S.Nothing;
 
-const protection = handler => headers => body => params => query =>
-  S.maybe ({ statusCode: 401, body: S.Nothing })
-          (auth => S.maybe ({ statusCode: 401, body: S.Nothing })
-                           (user => handler (headers) (body) (params) (query) (user))
+const protection = handler => ({ headers, body, params, query }) =>
+  S.maybe (Future.resolve ({ statusCode: 401, body: S.Nothing }))
+          (auth => S.maybe (Future.resolve ({ statusCode: 401, body: S.Nothing }))
+                           (user => handler (({ headers, body, params, query, user })))
                            (validateAuth (auth)))
           (S.value ('authorization') (headers));
 

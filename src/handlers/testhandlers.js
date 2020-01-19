@@ -1,17 +1,20 @@
+const Future = require ('fluture');
 const S = require ('../lib/sanctuary');
+const { JSONResponse } = require ('../types/Responses');
 
-const queryTest = headers => body => params => query =>
-  ({ statusCode: 200, body: S.Just (JSON.stringify (query)) });
+const queryTest = ({ query }) =>
+  S.maybe (Future.resolve (JSONResponse (401) (S.Nothing)))
+          (q => Future.resolve (JSONResponse (200) (S.Just (q))))
+          (query);
 
-const bodyQueryParamTest = headers => body => params => query => ({
-  statusCode: 200,
-  body: S.Just (JSON.stringify (S.concat (body) (S.concat (query) (params))))
-});
+const bodyQueryParamTest = ({ params, body, query }) =>
+  S.fromMaybe
+    (Future.resolve (JSONResponse (422) (S.Nothing)))
+    (S.lift2 (b => q =>  Future.resolve (JSONResponse (200) (S.Just ({ ...b, ...q, ...params }))))
+             (query)
+             (body));
 
-const loginTest = headers => body => params => query => user => ({
-  statusCode: 200,
-  body: S.Just (JSON.stringify ({ user }))
-});
+const loginTest = ({ user }) => Future.resolve (JSONResponse (200) (S.Just ({ user })));
 
 module.exports = {
   queryTest,

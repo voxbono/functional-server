@@ -1,40 +1,43 @@
+const Future = require ('fluture');
 const S = require ('../lib/sanctuary');
 const users = require ('../state/users');
+const { JSONResponse } = require ('../types/Responses');
 
 // findItembyId :: Int -> Array Object -> Maybe Object
 const findItembyId = id => S.find (item => id  === item.id);
 
-// findUserById :: Array Object -> Maybe String -> Maybe Object
+// findUserById :: Array Object -> String -> Maybe Object
 const findUserById = users => S.pipe ([
-  S.chain (S.parseInt (10)),
-  S.chain ((id => findItembyId (id) (users)))
+  S.parseInt (10),
+  S.chain ((id => findItembyId (id) (users))),
 ]);
 
-// findUsersByIds :: Array Object -> Maybe (Array String) ->  Array Object
+// findUsersByIds :: Array Object -> Maybe (StrMap (Array String)) ->  Maybe (Array Object)
 const findUsersByIds = users => S.pipe ([
-  S.sequence (Array),
-  S.map (findUserById (users)),
-  S.map (S.fromMaybe ({}))
+  S.chain (S.value ('id')),
+  S.map (S.map (findUserById (users))),
+  S.map (S.map (S.fromMaybe ({})))
 ]);
 
 // :: {} -> Future Void Response
-const getAllUsers = headers => body => params => query =>
-  ({ statusCode: 200, body: S.Just (JSON.stringify (users)) });
+const getAllUsers = _ =>
+  Future.resolve (JSONResponse (200) (S.Just (users)));
 
 // { params :: StrMap } -> Future Void Response
-const getUserById = headers => body => params => query =>
-  S.maybe ({ statusCode: 404, body: S.Nothing })
-          (user => ({ statusCode: 200, body: S.Just (JSON.stringify (user)) }))
-          (findUserById (users) (S.value ('id') (params)));
+const getUserById = ({ params }) =>
+  S.maybe (Future.resolve (JSONResponse (404) (S.Nothing)))
+          (user => Future.resolve (JSONResponse (200) (S.Just (user))))
+          (findUserById (users) (S.fromMaybe ('') (S.value ('id') (params))));
 
-// { Query :: StrMap (Array String)} -> Future Void Response
-const getUsersWithQuery = headers => body => params => query => ({
-  statusCode: 200,
-  body: S.Just (JSON.stringify (findUsersByIds (users) (S.value ('id') (query))))
-});
+// { Query :: {query :: Maybe (StrMap (Array String))} -> Future Void Response
+const getUsersWithQuery = ({ query }) => Future.resolve (
+  JSONResponse (200) (S.Just (S.fromMaybe ([{}]) (findUsersByIds (users) (query))))
+);
 
-//  addUser:: {email:: String} -> {} -> StrMap (Array String) -> Future Void Response
-const addUser = headers => ({ id, name, email }) => params => query =>
-  ({ statusCode: 200, body: S.Just (JSON.stringify ({ id, name, email })) });
+//  addUser:: {body:: StrMap String} -> Future Void Response
+const addUser = ({ body }) => Future.resolve (
+  S.maybe (JSONResponse (404) (S.Nothing))
+          (({ id, name, email }) => JSONResponse (200) (S.Just ({ id, name, email })))
+          (body));
 
 module.exports = { getAllUsers, getUserById, addUser, getUsersWithQuery };
