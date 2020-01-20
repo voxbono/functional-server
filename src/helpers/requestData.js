@@ -31,8 +31,7 @@ const parseQueryString = S.pipe ([
 //                  -> String
 //                  -> Maybe a
 const parseRequestBody = maybeBodyType => contentType => dataString =>
-S.maybe (S.Nothing)
-        (bodyType =>
+S.chain (bodyType =>
           S.chain (contentType => {
                     switch (contentType) {
                       case validHeaders.FORM_URLENCODED:
