@@ -3,31 +3,30 @@ const S = require ('./lib/sanctuary');
 const Future = require ('fluture');
 const { Literal, Capture } = require ('./types/Component');
 const indexHandler = require ('./handlers/index');
-const { getResponse } = require ('./helpers/requestData');
 const { getAllUsers, getUserById, getUsersWithQuery, addUser } = require ('./handlers/users');
-const { queryTest, bodyQueryParamTest, loginTest } = require ('./handlers/testhandlers');
+const { queryTest, bodyQueryParamTest, loginTest, htmlTest } = require ('./handlers/testhandlers');
+const { JSONResponse } = require ('./types/Responses');
 
-const userRecordType = S.Just ($.RecordType ({ id: $.Integer, name: $.String, email: $.String }));
+const userRecordType = $.RecordType ({ id: $.Integer, name: $.String, email: $.String });
 
 const validateAuth = auth => auth === 'password' ? S.Just ('User 1') : S.Nothing;
 
 const protection = handler => ({ headers, body, params, query }) =>
-  S.maybe (Future.resolve ({ statusCode: 401, body: S.Nothing }))
-          (auth => S.maybe (Future.resolve ({ statusCode: 401, body: S.Nothing }))
+  S.maybe (Future.resolve (JSONResponse (401) (S.Nothing)))
+          (auth => S.maybe (Future.resolve (JSONResponse (401) (S.Nothing)))
                            (user => handler (({ headers, body, params, query, user })))
                            (validateAuth (auth)))
           (S.value ('authorization') (headers));
 
-// Handler :: a -> StrMap String -> StrMap String -> Object Response
-// partiallyGetResponse :: string -> Maybe String -> String -> StrMap Sring-> Future Void Response
-// routes :: [Pair [Component] (StrMap (Maybe (Type a) -> Handler -> partiallyGetResponse))]
+// routes :: [Pair [Component] (StrMap Object)]
 module.exports = [
-  S.Pair ([]) ({ GET: getResponse (S.Nothing) (indexHandler) }),
-  S.Pair ([Literal ('users')]) ({ GET: getResponse (S.Nothing) (getAllUsers) }),
-  S.Pair ([Literal ('users'), Literal ('query')]) ({ GET: getResponse (S.Nothing) (getUsersWithQuery) }),
-  S.Pair ([Literal ('users'), Literal ('add')]) ({ POST: getResponse (userRecordType) (addUser) }),
-  S.Pair ([Literal ('users'), Capture ('id')]) ({ GET: getResponse (S.Nothing) (getUserById) }),
-  S.Pair ([Literal ('querytest')]) ({ GET: getResponse (S.Nothing) (queryTest) }),
-  S.Pair ([Literal ('querytest'), Literal ('login')]) ({ GET: getResponse (S.Nothing) (protection (loginTest)) }),
-  S.Pair ([Literal ('querytest'), Capture ('id'), Capture ('name')]) ({ POST: getResponse (S.Just ($.Any)) (bodyQueryParamTest) })
+  S.Pair ([]) ({ GET: { handler: indexHandler } }),
+  S.Pair ([Literal ('users')]) ({ GET: { handler: getAllUsers } }),
+  S.Pair ([Literal ('users'), Literal ('query')]) ({ GET: { handler: getUsersWithQuery } }),
+  S.Pair ([Literal ('users'), Literal ('add')]) ({ POST: { body: userRecordType, handler: addUser } }),
+  S.Pair ([Literal ('users'), Capture ('id')]) ({ GET: { handler: getUserById } }),
+  S.Pair ([Literal ('querytest')]) ({ GET: { handler: queryTest } }),
+  S.Pair ([Literal ('querytest'), Literal ('login')]) ({ GET: { handler: protection (loginTest) } }),
+  S.Pair ([Literal ('querytest'), Capture ('id'), Capture ('name')]) ({ POST: { body: $.Any, handler: bodyQueryParamTest } }),
+  S.Pair ([Literal ('querytest'), Literal ('gethtml')]) ({ GET: { handler: htmlTest } })
 ];

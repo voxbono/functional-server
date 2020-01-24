@@ -1,6 +1,7 @@
 const Future = require ('fluture');
 const S = require ('../lib/sanctuary');
+const { JSONResponse } = require ('../types/Responses');
 
 // :: {} -> Future Void Response
 module.exports = _ =>
-  Future.resolve ({ statusCode: 200, body: S.Just (JSON.stringify ({ a: 'b' })) });
+  Future.resolve (JSONResponse (200) (S.Just ({ a: 'b' })));

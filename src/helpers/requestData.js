@@ -1,4 +1,7 @@
 const S = require ('../lib/sanctuary');
+const $ = require ('sanctuary-def');
+const Future = require ('fluture');
+const { JSONResponse, HTMLResponse } = require ('../types/Responses');
 
 // validHeaders :: StrMap
 const validHeaders = {
@@ -35,7 +38,8 @@ S.chain (bodyType =>
           S.chain (contentType => {
                     switch (contentType) {
                       case validHeaders.FORM_URLENCODED:
-                        return S.Just (parseQueryString (dataString));
+                        return S.eitherToMaybe (S.tagBy (S.is (bodyType))
+                                                        (parseQueryString (dataString)));
                       case validHeaders.JSON:
                         return S.parseJson (S.is (bodyType)) (dataString);
                       default:
@@ -53,21 +57,24 @@ const parseRequestQuery = S.pipe ([
   S.map (parseQueryString)
 ]);
 
-// getResponse :: Maybe (Type a)
-//             -> (a -> StrMap String -> StrMap String -> Future Void Response)
+// getResponse :: Object
+//             -> String
 //             -> String
 //             -> Maybe Sring
-//             -> String
 //             -> StrMap String
 //             -> Future Void Response
-const getResponse = maybeBodyType => handler => url => headers => body => params =>
-  handler ({
-    headers,
-    body: parseRequestBody (maybeBodyType) (S.value ('content-type') (headers)) (body),
-    params,
-    query:
-    parseRequestQuery (url)
-});
+const getResponse = routeData => url => headers => body => params =>
+  S.maybe (Future.reject ('Handler missing for route'))
+          (handler =>
+            handler (
+              {
+                headers,
+                params,
+                body: parseRequestBody (S.get (S.is ($.Type)) ('body') (routeData))
+                                       (S.value ('content-type') (headers)) (body),
+                query: parseRequestQuery (url)
+              }))
+          (S.get (S.is ($.AnyFunction)) ('handler') (routeData));
 
 
 //    matchComponent :: Component -> String -> Maybe (StrMap String)
@@ -80,4 +87,15 @@ const matchComponent = c => s => {
   }
 };
 
-module.exports = { parseRequestBody, parseRequestQuery, matchComponent, getResponse };
+const getCorrectResponseType = headers => status => maybeBody => {
+  switch (headers['accept']) {
+    case 'application/json':
+      return JSONResponse (status) (maybeBody);
+    case 'text/html':
+      return HTMLResponse (status) (maybeBody);
+    default:
+      return JSONResponse (status) (maybeBody);
+  }
+};
+
+module.exports = { parseRequestBody, parseRequestQuery, matchComponent, getResponse, getCorrectResponseType };

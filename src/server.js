@@ -1,26 +1,24 @@
 const http = require ('http');
 const Future = require ('fluture');
 const S = require ('./lib/sanctuary');
-const { matchComponent } = require ('./helpers/requestData');
+const { matchComponent, getCorrectResponseType, getResponse } = require ('./helpers/requestData');
 const routes = require ('./routes');
 
-// Handler :: a -> StrMap String -> StrMap String -> Object Response
-// partiallyGetResponse :: string -> Maybe String -> String -> StrMap Sring-> Future Void Response
-// Route::  Pair [Component] (StrMap (Maybe (Type a) -> Handler -> partiallyGetResponse))
-// getRouteHandlerFuture :: [Route]
+// getRouteHandlerFuture :: [Pair [Component] (StrMap Object)]
 //                       -> Pair NodeRequest String
 //                       -> Future Void Response
 const getRouteHandlerFuture =  routes => ([req, body]) => {
   const urlArray = getUrlArray (req.url);
-  return S.fromMaybe (Future.resolve ({ statusCode: 404, body: S.Nothing }))
-                     (S.reduce (maybeResponseHandler => ([components, routeResponseHandlers]) =>
+  return S.fromMaybe (Future.resolve (getCorrectResponseType (req.headers) (404) (S.Nothing)))
+                     (S.reduce (maybeResponseHandler => ([components, routesData]) =>
                                   S.maybe_ (() => components.length === urlArray.length
-                                                ? S.lift2 (responseHandler => responseHandler
-                                                                        (req.url)
-                                                                        (req.headers)
-                                                                        (body))
+                                                ? S.lift2 (routeData => getResponse
+                                                                          (routeData)
+                                                                          (req.url)
+                                                                          (req.headers)
+                                                                          (body))
                                                           (S.value (req.method)
-                                                                   (routeResponseHandlers))
+                                                                   (routesData))
                                                           (S.map (S.reduce (S.concat) ({}))
                                                                  (S.sequence
                                                                     (S.Maybe)
@@ -71,14 +69,15 @@ const collectRequestData = req => Future ((reject, resolve) => {
 const handleRequest = routes =>  (req, res) =>
   S.pipe ([
             S.chain (getRouteHandlerFuture (routes)),
-            Future.fork (_ => {
-                          console.log ('OMG! This should not happen');
+            Future.fork (err => {
+                          console.log (err);
                           res.writeHead (500);
                           res.end (JSON.stringify (http.STATUS_CODES[500]));
                         })
-                        (({ statusCode, body }) => {
+                        (({ statusCode, body, contentType }) => {
                           res.statusCode = statusCode;
-                          res.setHeader ('Content-Type', 'application/json');
+                          res.setHeader ('Content-Type', contentType);
+                          res.setHeader ('X-Powered-By', 'functional-server');
                           S.maybe_ (() => res.end ()) (s => res.end (s)) (body);
                         })
         ])

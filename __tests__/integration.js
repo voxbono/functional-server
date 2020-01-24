@@ -35,6 +35,7 @@ describe ('Trying out some stuff', () => {
     .set ('Accept', 'applicaton/json')
     .send ({ id: 1, name: 'Jonas', email: 'test@test.com' })
     .then (res => {
+      expect (res.status).toBe (200);
       expect (res.body).toEqual ({ id: 1, name: 'Jonas', email: 'test@test.com' });
     }));
 
@@ -42,12 +43,14 @@ describe ('Trying out some stuff', () => {
     request (app)
     .get ('/users/1')
     .then (res => {
+      expect (res.status).toBe (200);
       expect (res.body).toEqual (users.find (user => user.id === 1));
     }));
 
   test ('Get non-existing user', () =>
     request (app)
     .get ('/users/5')
+    .set ('Accept', 'application/json')
     .then (res => {
       expect (res.error.status).toBe (404);
     }));
@@ -56,6 +59,7 @@ describe ('Trying out some stuff', () => {
     request (app)
     .get ('/users/query?id=1&id=2')
     .then (res => {
+      expect (res.status).toBe (200);
       expect (res.body).toEqual (users.filter (user => user.id === 1 || user.id === 2));
     }));
 
@@ -63,6 +67,7 @@ describe ('Trying out some stuff', () => {
     request (app)
     .get ('/users/query?something=1&somethingElse=hey')
     .then (res => {
+      expect (res.status).toBe (200);
       expect (res.body).toEqual ([{}]);
     }));
 
@@ -70,6 +75,7 @@ describe ('Trying out some stuff', () => {
     request (app)
     .get ('/users/query')
     .then (res => {
+      expect (res.status).toBe (200);
       expect (res.body).toEqual ([{}]);
     }));
 
@@ -77,6 +83,7 @@ describe ('Trying out some stuff', () => {
     request (app)
     .get ('/querytest?foo=foo&bar=bar')
     .then (res => {
+      expect (res.status).toBe (200);
       expect (res.body).toEqual ({ foo: ['foo'], bar: ['bar'] });
     }));
 
@@ -84,6 +91,7 @@ describe ('Trying out some stuff', () => {
     request (app)
     .get ('/querytest?foo=foo&foo=bar&baz=baz')
     .then (res => {
+      expect (res.status).toBe (200);
       expect (res.body).toEqual ({ foo: ['foo', 'bar'], baz: ['baz'] });
     }));
 
@@ -92,6 +100,7 @@ describe ('Trying out some stuff', () => {
     .post ('/querytest/1/Peter?foo=foo/&foo=bar&baz=baz')
     .send ({ a: '%3/æøå' })
     .then (res => {
+      expect (res.status).toBe (200);
       expect (res.body).toEqual ({
         a: '%3/æøå',
         baz: ['baz'],
@@ -107,6 +116,7 @@ describe ('Trying out some stuff', () => {
     .send ({ a: '%3/æøå' })
     .set ('Content-Type', 'application/x-www-form-urlencoded')
     .then (res => {
+      expect (res.status).toBe (200);
       expect (res.body).toEqual ({
         a: ['%253%2F%C3%A6%C3%B8%C3%A5'],
         baz: ['baz'],
@@ -120,6 +130,7 @@ describe ('Trying out some stuff', () => {
     .get ('/querytest/login')
     .set ('Authorization', 'password')
     .then (res => {
+      expect (res.status).toBe (200);
       expect (res.body).toEqual ({ user: 'User 1' });
     })
   );
@@ -143,7 +154,16 @@ describe ('Trying out some stuff', () => {
     .get ('/querytest/login')
     .set ('Authorization', 'password')
     .then (res => {
+      expect (res.status).toBe (200);
       expect (res.body).toEqual ({ user: 'User 1' });
+    })
+  );
+  test ('HTML response', () =>
+    request (app)
+    .get ('/querytest/gethtml')
+    .set ('Accept', 'text/html')
+    .then (res => {
+      expect (res.status).toBe (200);
     })
   );
 });
