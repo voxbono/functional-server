@@ -28,5 +28,6 @@ module.exports = [
   S.Pair ([Literal ('querytest')]) ({ GET: { handler: queryTest } }),
   S.Pair ([Literal ('querytest'), Literal ('login')]) ({ GET: { handler: protection (loginTest) } }),
   S.Pair ([Literal ('querytest'), Capture ('id'), Capture ('name')]) ({ POST: { body: $.Any, handler: bodyQueryParamTest } }),
-  S.Pair ([Literal ('querytest'), Literal ('gethtml')]) ({ GET: { handler: htmlTest } })
+  S.Pair ([Literal ('querytest'), Literal ('gethtml')]) ({ GET: { handler: htmlTest } }),
+  S.Pair ([Literal ('nohandler')]) ({ GET: {} })
 ];

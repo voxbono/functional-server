@@ -166,4 +166,11 @@ describe ('Trying out some stuff', () => {
       expect (res.status).toBe (200);
     })
   );
+  test ('Router with no handler', () =>
+    request (app)
+    .get ('/nohandler')
+    .then (res =>
+      expect (res.status).toBe (500)
+    )
+  );
 });

@@ -1,7 +1,4 @@
 const S = require ('../lib/sanctuary');
-const $ = require ('sanctuary-def');
-const Future = require ('fluture');
-const { JSONResponse, HTMLResponse } = require ('../types/Responses');
 
 // validHeaders :: StrMap
 const validHeaders = {
@@ -57,25 +54,6 @@ const parseRequestQuery = S.pipe ([
   S.map (parseQueryString)
 ]);
 
-// getResponse :: Object
-//             -> String
-//             -> String
-//             -> Maybe Sring
-//             -> StrMap String
-//             -> Future Void Response
-const getResponse = routeData => url => headers => body => params =>
-  S.maybe (Future.reject ('Handler missing for route'))
-          (handler =>
-            handler (
-              {
-                headers,
-                params,
-                body: parseRequestBody (S.get (S.is ($.Type)) ('body') (routeData))
-                                       (S.value ('content-type') (headers)) (body),
-                query: parseRequestQuery (url)
-              }))
-          (S.get (S.is ($.AnyFunction)) ('handler') (routeData));
-
 
 //    matchComponent :: Component -> String -> Maybe (StrMap String)
 const matchComponent = c => s => {
@@ -87,15 +65,4 @@ const matchComponent = c => s => {
   }
 };
 
-const getCorrectResponseType = headers => status => maybeBody => {
-  switch (headers['accept']) {
-    case 'application/json':
-      return JSONResponse (status) (maybeBody);
-    case 'text/html':
-      return HTMLResponse (status) (maybeBody);
-    default:
-      return JSONResponse (status) (maybeBody);
-  }
-};
-
-module.exports = { parseRequestBody, parseRequestQuery, matchComponent, getResponse, getCorrectResponseType };
+module.exports = { parseRequestBody, parseRequestQuery, matchComponent };
