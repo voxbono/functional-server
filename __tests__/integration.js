@@ -5,7 +5,7 @@ const { handleRequest } = require ('../src/server');
 const routes = require ('../example/routes');
 const users = require ('../example/state/users');
 
-describe ('Trying out some stuff', () => {
+describe ('Integration tests', () => {
   test ('Invalid route', () =>
     request (handleRequest (routes))
     .get ('/silly')
