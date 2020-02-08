@@ -3,7 +3,6 @@ const Future = require ('fluture');
 const $ = require ('sanctuary-def');
 const S = require ('./lib/sanctuary');
 const { matchComponent, parseRequestBody, parseRequestQuery } = require ('./helpers/requestData');
-const routes = require ('./routes');
 const { JSONResponse } = require ('./types/Responses');
 
 // getUrlArray :: String -> Array String
@@ -100,4 +99,9 @@ const handleRequest = routes =>  (req, res) =>
         ])
         (collectRequestData (req));
 
-module.exports = handleRequest (routes);
+module.exports = {
+  $,
+  S,
+  Future,
+  handleRequest
+};

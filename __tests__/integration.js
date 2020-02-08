@@ -1,19 +1,20 @@
 /* eslint no-undef: 0 */
 /* eslint node/no-unpublished-require: 0 */
 const request = require ('supertest');
-const app = require ('../src/server');
-const users = require ('../src/state/users');
+const { handleRequest } = require ('../src/server');
+const routes = require ('../example/routes');
+const users = require ('../example/state/users');
 
 describe ('Trying out some stuff', () => {
   test ('Invalid route', () =>
-    request (app)
+    request (handleRequest (routes))
     .get ('/silly')
     .then (res => {
       expect (res.error.status).toBe (404);
     }));
 
   test ('Index route', () =>
-    request (app)
+    request (handleRequest (routes))
     .get ('/')
     .then (res => {
       expect (res.status).toBe (200);
@@ -21,7 +22,7 @@ describe ('Trying out some stuff', () => {
     }));
 
   test ('Users route', () =>
-    request (app)
+    request (handleRequest (routes))
     .get ('/users')
     .then (res => {
       expect (res.status).toBe (200);
@@ -29,7 +30,7 @@ describe ('Trying out some stuff', () => {
     }));
 
   test ('Add user', () =>
-    request (app)
+    request (handleRequest (routes))
     .post ('/users/add')
     .set ('Content-Type', 'application/json')
     .set ('Accept', 'applicaton/json')
@@ -40,7 +41,7 @@ describe ('Trying out some stuff', () => {
     }));
 
   test ('Get existing user', () =>
-    request (app)
+    request (handleRequest (routes))
     .get ('/users/1')
     .then (res => {
       expect (res.status).toBe (200);
@@ -48,7 +49,7 @@ describe ('Trying out some stuff', () => {
     }));
 
   test ('Get non-existing user', () =>
-    request (app)
+    request (handleRequest (routes))
     .get ('/users/5')
     .set ('Accept', 'application/json')
     .then (res => {
@@ -56,7 +57,7 @@ describe ('Trying out some stuff', () => {
     }));
 
   test ('Get existing users with query', () =>
-    request (app)
+    request (handleRequest (routes))
     .get ('/users/query?id=1&id=2')
     .then (res => {
       expect (res.status).toBe (200);
@@ -64,7 +65,7 @@ describe ('Trying out some stuff', () => {
     }));
 
   test ('Get non-existing users with query', () =>
-    request (app)
+    request (handleRequest (routes))
     .get ('/users/query?something=1&somethingElse=hey')
     .then (res => {
       expect (res.status).toBe (200);
@@ -72,7 +73,7 @@ describe ('Trying out some stuff', () => {
     }));
 
   test ('Get empty query', () =>
-    request (app)
+    request (handleRequest (routes))
     .get ('/users/query')
     .then (res => {
       expect (res.status).toBe (200);
@@ -80,7 +81,7 @@ describe ('Trying out some stuff', () => {
     }));
 
   test ('Get query', () =>
-    request (app)
+    request (handleRequest (routes))
     .get ('/querytest?foo=foo&bar=bar')
     .then (res => {
       expect (res.status).toBe (200);
@@ -88,7 +89,7 @@ describe ('Trying out some stuff', () => {
     }));
 
   test ('Get query with equal names', () =>
-    request (app)
+    request (handleRequest (routes))
     .get ('/querytest?foo=foo&foo=bar&baz=baz')
     .then (res => {
       expect (res.status).toBe (200);
@@ -96,7 +97,7 @@ describe ('Trying out some stuff', () => {
     }));
 
   test ('Body query and params in one json request', () =>
-    request (app)
+    request (handleRequest (routes))
     .post ('/querytest/1/Peter?foo=foo/&foo=bar&baz=baz')
     .send ({ a: '%3/æøå' })
     .then (res => {
@@ -111,7 +112,7 @@ describe ('Trying out some stuff', () => {
     }));
 
   test ('Body query and params in one application/x-www-form-urlencoded request', () =>
-    request (app)
+    request (handleRequest (routes))
     .post ('/querytest/1/Peter?foo=foo/&foo=bar&baz=baz')
     .send ({ a: '%3/æøå' })
     .set ('Content-Type', 'application/x-www-form-urlencoded')
@@ -126,7 +127,7 @@ describe ('Trying out some stuff', () => {
       });
     }));
   test ('Login with authorization header', () =>
-    request (app)
+    request (handleRequest (routes))
     .get ('/querytest/login')
     .set ('Authorization', 'password')
     .then (res => {
@@ -135,14 +136,14 @@ describe ('Trying out some stuff', () => {
     })
   );
   test ('Login without authorization header', () =>
-    request (app)
+    request (handleRequest (routes))
     .get ('/querytest/login')
     .then (res => {
       expect (res.status).toBe (401);
     })
   );
   test ('Login with wrong authorization header', () =>
-    request (app)
+    request (handleRequest (routes))
     .get ('/querytest/login')
     .set ('Authorization', 'wrongpassword')
     .then (res => {
@@ -150,7 +151,7 @@ describe ('Trying out some stuff', () => {
     })
   );
   test ('Login with authorization header', () =>
-    request (app)
+    request (handleRequest (routes))
     .get ('/querytest/login')
     .set ('Authorization', 'password')
     .then (res => {
@@ -159,7 +160,7 @@ describe ('Trying out some stuff', () => {
     })
   );
   test ('HTML response', () =>
-    request (app)
+    request (handleRequest (routes))
     .get ('/querytest/gethtml')
     .set ('Accept', 'text/html')
     .then (res => {
@@ -167,7 +168,7 @@ describe ('Trying out some stuff', () => {
     })
   );
   test ('Router with no handler', () =>
-    request (app)
+    request (handleRequest (routes))
     .get ('/nohandler')
     .then (res =>
       expect (res.status).toBe (500)

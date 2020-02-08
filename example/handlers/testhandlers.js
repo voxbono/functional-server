@@ -1,6 +1,5 @@
-const Future = require ('fluture');
-const S = require ('../lib/sanctuary');
-const { JSONResponse, HTMLResponse } = require ('../types/Responses');
+const { S, Future } = require ('../../src/server');
+const { JSONResponse, HTMLResponse } = require ('../../src/types/Responses');
 
 const queryTest = ({ query }) =>
   S.maybe (Future.resolve (JSONResponse (401) (S.Nothing)))

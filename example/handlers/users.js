@@ -1,7 +1,6 @@
-const Future = require ('fluture');
-const S = require ('../lib/sanctuary');
+const { S, Future } = require ('../../src/server');
+const { JSONResponse } = require ('../../src/types/Responses');
 const users = require ('../state/users');
-const { JSONResponse } = require ('../types/Responses');
 
 // findItembyId :: Int -> Array Object -> Maybe Object
 const findItembyId = id => S.find (item => id  === item.id);

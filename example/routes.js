@@ -1,11 +1,9 @@
-const $ = require ('sanctuary-def');
-const S = require ('./lib/sanctuary');
-const Future = require ('fluture');
-const { Literal, Capture } = require ('./types/Component');
+const { $, S, Future } = require ('../src/server');
+const { Literal, Capture } = require ('../src/types/Component');
+const { JSONResponse } = require ('../src/types/Responses');
 const indexHandler = require ('./handlers/index');
 const { getAllUsers, getUserById, getUsersWithQuery, addUser } = require ('./handlers/users');
 const { queryTest, bodyQueryParamTest, loginTest, htmlTest } = require ('./handlers/testhandlers');
-const { JSONResponse } = require ('./types/Responses');
 
 const userRecordType = $.RecordType ({ id: $.Integer, name: $.String, email: $.String });
 
