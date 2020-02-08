@@ -6,14 +6,23 @@ const { matchComponent, parseRequestBody, parseRequestQuery } = require ('./help
 const routes = require ('./routes');
 const { JSONResponse } = require ('./types/Responses');
 
+// getUrlArray :: String -> Array String
+const getUrlArray = S.pipe ([
+  S.splitOn ('?'),
+  S.head,
+  S.fromMaybe (''),
+  S.splitOn ('/'),
+  S.reject (S.equals (''))
+]);
 
-// getResponse :: Object
-//             -> String
+
+// getResponse :: String
 //             -> String
 //             -> Maybe Sring
+//             -> Object
 //             -> StrMap String
 //             -> Future Void Response
-const getResponse = routeData => url => headers => body => params =>
+const getResponse =  url => headers => body => routeData => params =>
   S.maybe (Future.reject ('Handler missing for route'))
           (handler =>
             handler (
@@ -35,35 +44,19 @@ const getRouteHandlerFuture =  routes => ([req, body]) => {
   return S.fromMaybe (Future.resolve (JSONResponse (404) (S.Nothing)))
                      (S.reduce (maybeResponseHandler => ([components, routesData]) =>
                                   S.maybe_ (() => components.length === urlArray.length
-                                                ? S.lift2 (routeData => getResponse
-                                                                          (routeData)
-                                                                          (req.url)
-                                                                          (req.headers)
-                                                                          (body))
-                                                          (S.value (req.method)
-                                                                   (routesData))
-                                                          (S.map (S.reduce (S.concat) ({}))
-                                                                 (S.sequence
-                                                                    (S.Maybe)
-                                                                    (S.zipWith (matchComponent)
-                                                                              (components)
-                                                                              (urlArray))))
-                                                : S.Nothing)
+                                              ? S.lift2 (getResponse (req.url) (req.headers) (body))
+                                                        (S.value (req.method) (routesData))
+                                                        (S.map (S.reduce (S.concat) ({}))
+                                                               (S.sequence (S.Maybe)
+                                                                           (S.zipWith (matchComponent)
+                                                                                      (components)
+                                                                                      (urlArray))))
+                                              : S.Nothing)
                                            (S.Just)
                                            (maybeResponseHandler))
                                (S.Nothing)
                                (routes));
 };
-
-
-// getUrlArray :: String -> Array String
-const getUrlArray = S.pipe ([
-  S.splitOn ('?'),
-  S.head,
-  S.fromMaybe (''),
-  S.splitOn ('/'),
-  S.reject (S.equals (''))
-]);
 
 
 // --------------------------- IMPURE--------------------------------------------
