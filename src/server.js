@@ -3,7 +3,7 @@ const Future = require ('fluture');
 const $ = require ('sanctuary-def');
 const S = require ('./lib/sanctuary');
 const { matchComponent, parseRequestBody, parseRequestQuery } = require ('./helpers/requestData');
-const { JSONResponse } = require ('./types/Responses');
+const { JSONResponse, JSONResponse_ } = require ('./types/Responses');
 
 // getUrlArray :: String -> Array String
 const getUrlArray = S.pipe ([
@@ -18,43 +18,71 @@ const getUrlArray = S.pipe ([
 // getResponse :: String
 //             -> String
 //             -> Maybe Sring
-//             -> Object
 //             -> StrMap String
+//             -> Handler
 //             -> Future Void Response
-const getResponse =  url => headers => body => routeData => params =>
-  S.maybe (Future.reject ('Handler missing for route'))
-          (handler =>
-            handler (
-              {
-                headers,
-                params,
-                body: parseRequestBody (S.get (S.is ($.Type)) ('body') (routeData))
-                                       (S.value ('content-type') (headers)) (body),
-                query: parseRequestQuery (url)
-              }))
-          (S.get (S.is ($.AnyFunction)) ('handler') (routeData));
+const getResponse =  url => headers => body =>  params => handler => {
+  switch (handler.method) {
+    case 'GET':
+      return handler.handler (
+        {
+          headers,
+          params,
+          query: parseRequestQuery (url)
+        });
+    case 'POST':
+      return handler.handler (
+        {
+          headers,
+          params,
+          body: parseRequestBody (handler.type) (S.value ('content-type') (headers)) (body),
+          query: parseRequestQuery (url)
+        });
+      case 'PUT':
+        return handler.handler (
+          {
+            headers,
+            params,
+            body: parseRequestBody (handler.type) (S.value ('content-type') (headers)) (body),
+            query: parseRequestQuery (url)
+          });
+  }
+};
+
+const JSON405Response = handlers =>
+  JSONResponse_ (405)
+                ({ 'allow': S.joinWith
+                              (', ')
+                              (S.map (S.prop ('method'))
+                                     (handlers)) })
+                (S.Nothing);
 
 
-// getRouteHandlerFuture :: [Pair [Component] (StrMap Object)]
+// getRouteHandlerFuture :: [Pair [Component] [Handler]]
 //                       -> Pair NodeRequest String
-//                       -> Future Void Response
+//                       -> Maybe (Future Void Response)
 const getRouteHandlerFuture =  routes => ([req, body]) => {
   const urlArray = getUrlArray (req.url);
-  return S.fromMaybe (Future.resolve (JSONResponse (404) (S.Nothing)))
-                     (S.reduce (maybeResponseHandler => ([components, routesData]) =>
-                                  S.maybe_ (() => components.length === urlArray.length
-                                              ? S.lift2 (getResponse (req.url) (req.headers) (body))
-                                                        (S.value (req.method) (routesData))
-                                                        (S.map (S.reduce (S.concat) ({}))
-                                                               (S.sequence (S.Maybe)
-                                                                           (S.zipWith (matchComponent)
-                                                                                      (components)
-                                                                                      (urlArray))))
-                                              : S.Nothing)
-                                           (S.Just)
-                                           (maybeResponseHandler))
-                               (S.Nothing)
-                               (routes));
+  return S.fromMaybe
+    (Future.resolve (JSONResponse (404) (S.Nothing)))
+    (S.reduce (maybeFutureResponse => ([components, handlers]) =>
+                S.maybe_ (() => components.length === urlArray.length
+                            ? S.map
+                                (captures => S.maybe (Future.resolve (JSON405Response (handlers)))
+                                                     (getResponse (req.url)
+                                                                  (req.headers)
+                                                                  (body)
+                                                                  (captures))
+                                                     (S.find (h => h.method === req.method) (handlers)))
+                                (S.map (S.reduce (S.concat) ({}))
+                                       (S.sequence (S.Maybe) (S.zipWith (matchComponent)
+                                                                        (components)
+                                                                        (urlArray))))
+                            : S.Nothing)
+                          (S.Just)
+                          (maybeFutureResponse))
+              (S.Nothing)
+              (routes));
 };
 
 

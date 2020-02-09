@@ -4,6 +4,7 @@ const { JSONResponse } = require ('../src/types/Responses');
 const indexHandler = require ('./handlers/index');
 const { getAllUsers, getUserById, getUsersWithQuery, addUser } = require ('./handlers/users');
 const { queryTest, bodyQueryParamTest, loginTest, htmlTest } = require ('./handlers/testhandlers');
+const { Get, Post } = require ('../src/types/Handler/Handler.data');
 
 const userRecordType = $.RecordType ({ id: $.Integer, name: $.String, email: $.String });
 
@@ -18,14 +19,15 @@ const protection = handler => ({ headers, body, params, query }) =>
 
 // routes :: [Pair [Component] (StrMap Object)]
 module.exports = [
-  S.Pair ([]) ({ GET: { handler: indexHandler } }),
-  S.Pair ([Literal ('users')]) ({ GET: { handler: getAllUsers } }),
-  S.Pair ([Literal ('users'), Literal ('query')]) ({ GET: { handler: getUsersWithQuery } }),
-  S.Pair ([Literal ('users'), Literal ('add')]) ({ POST: { body: userRecordType, handler: addUser } }),
-  S.Pair ([Literal ('users'), Capture ('id')]) ({ GET: { handler: getUserById } }),
-  S.Pair ([Literal ('querytest')]) ({ GET: { handler: queryTest } }),
-  S.Pair ([Literal ('querytest'), Literal ('login')]) ({ GET: { handler: protection (loginTest) } }),
-  S.Pair ([Literal ('querytest'), Capture ('id'), Capture ('name')]) ({ POST: { body: $.Any, handler: bodyQueryParamTest } }),
-  S.Pair ([Literal ('querytest'), Literal ('gethtml')]) ({ GET: { handler: htmlTest } }),
-  S.Pair ([Literal ('nohandler')]) ({ GET: {} })
+  S.Pair ([]) ([Get (indexHandler)]),
+  S.Pair ([Literal ('users')]) ([Get (getAllUsers)]),
+  S.Pair ([Literal ('users'), Literal ('query')]) ([Get (getUsersWithQuery)]),
+  S.Pair ([Literal ('users'), Literal ('add')]) ([Post (userRecordType) (addUser)]),
+  S.Pair ([Literal ('users'), Capture ('id')]) ([Get (getUserById)]),
+  S.Pair ([Literal ('querytest')]) ([Get (queryTest)]),
+  S.Pair ([Literal ('querytest'), Literal ('login')]) ([Get (protection (loginTest))]),
+  S.Pair ([Literal ('querytest'), Capture ('id'), Capture ('name')])
+         ([Post ($.Any) (bodyQueryParamTest)]),
+  S.Pair ([Literal ('querytest'), Literal ('gethtml')]) ([Get (htmlTest)]),
+  S.Pair ([Literal ('nohandler')]) ([])
 ];

@@ -170,8 +170,16 @@ describe ('Integration tests', () => {
   test ('Router with no handler', () =>
     request (handleRequest (routes))
     .get ('/nohandler')
-    .then (res =>
-      expect (res.status).toBe (500)
-    )
+    .then (res => {
+      expect (res.status).toBe (405);
+    })
+  );
+  test ('Non exisiting method', () =>
+    request (handleRequest (routes))
+    .delete ('/users')
+    .then (res => {
+      expect (res.headers.allow).toEqual ('GET');
+      expect (res.status).toBe (405);
+    })
   );
 });

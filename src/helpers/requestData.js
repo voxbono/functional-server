@@ -26,25 +26,23 @@ const parseQueryString = S.pipe ([
            ({})
 ]);
 
-// parseRequestData :: (a -> Bool)
+// parseRequestData :: Type
 //                  -> Maybe String
 //                  -> String
 //                  -> Maybe a
-const parseRequestBody = maybeBodyType => contentType => dataString =>
-S.chain (bodyType =>
-          S.chain (contentType => {
-                    switch (contentType) {
-                      case validHeaders.FORM_URLENCODED:
-                        return S.eitherToMaybe (S.tagBy (S.is (bodyType))
-                                                        (parseQueryString (dataString)));
-                      case validHeaders.JSON:
-                        return S.parseJson (S.is (bodyType)) (dataString);
-                      default:
-                        return S.Nothing;
-                    }
-                  })
-                  (contentType))
-        (maybeBodyType);
+const parseRequestBody = bodyType => contentType => dataString =>
+  S.chain (contentType => {
+            switch (contentType) {
+              case validHeaders.FORM_URLENCODED:
+                return S.eitherToMaybe (S.tagBy (S.is (bodyType))
+                                                (parseQueryString (dataString)));
+              case validHeaders.JSON:
+                return S.parseJson (S.is (bodyType)) (dataString);
+              default:
+                return S.Nothing;
+            }
+          })
+          (contentType);
 
 // parseRequestQuery :: String -> Maybe (StrMap (Array String))
 const parseRequestQuery = S.pipe ([
