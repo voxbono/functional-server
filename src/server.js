@@ -3,7 +3,7 @@ const Future = require ('fluture');
 const $ = require ('sanctuary-def');
 const S = require ('./lib/sanctuary');
 const { matchComponent, parseRequestBody, parseRequestQuery } = require ('./helpers/requestData');
-const { JSONResponse, JSONResponse_ } = require ('./types/Responses');
+const { JSONResponse, JSON405Response } = require ('./types/Responses');
 
 // getUrlArray :: String -> Array String
 const getUrlArray = S.pipe ([
@@ -48,14 +48,6 @@ const getResponse =  url => headers => body =>  params => handler => {
           });
   }
 };
-
-const JSON405Response = handlers =>
-  JSONResponse_ (405)
-                ({ 'allow': S.joinWith
-                              (', ')
-                              (S.map (S.prop ('method'))
-                                     (handlers)) })
-                (S.Nothing);
 
 
 // getRouteHandlerFuture :: [Pair [Component] [Handler]]

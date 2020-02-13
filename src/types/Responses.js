@@ -1,14 +1,22 @@
 const S = require ('../lib/sanctuary');
 
-const JSONResponse = statusCode => JSONResponse_ (statusCode) ({});
-
-const JSONResponse_ = statusCode => headers => maybeData => ({
+const _JSONResponse = statusCode => headers => maybeData => ({
   statusCode,
   body: S.map (data => JSON.stringify (data)) (maybeData),
   headers: S.concat (headers) ({
     'Content-Type': 'application/json; charset=utf-8'
   })
 });
+
+const JSONResponse = statusCode => _JSONResponse (statusCode) ({});
+
+const JSON405Response = handlers =>
+  _JSONResponse (405)
+                ({ 'allow': S.joinWith
+                              (', ')
+                              (S.map (S.prop ('method'))
+                                     (handlers)) })
+                (S.Nothing);
 
 const HTMLResponse = statusCode => maybeData => ({
   statusCode,
@@ -19,7 +27,7 @@ const HTMLResponse = statusCode => maybeData => ({
 });
 
 module.exports = {
+  JSON405Response,
   JSONResponse,
-  JSONResponse_,
   HTMLResponse
 };
